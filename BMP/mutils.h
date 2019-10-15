@@ -17,7 +17,7 @@ void printBfhdrBinary(BFHEADER *bfhdrp);
 RGB** BMPReaderRead(const BFHEADER *bfhdrp, const BIHEADER *bihdrp, FILE *fp);
 void BMPReaderCleanup(RGB** rgbData, const BIHEADER *bihdrp);
 int bmp2file(const char *fname, const BFHEADER *bfhdrp, const BIHEADER *bihdrp, RGB **rgbData);
-int revealInfo(RGB** rgbData, const BIHEADER *bihdrp, const char *info, uint16_t len);
+int hideInfo(RGB** rgbData, const BIHEADER *bihdrp, const char *info, uint16_t len);
 int readInfo(RGB** rgbData, const BIHEADER *bihdrp);
 
 #endif

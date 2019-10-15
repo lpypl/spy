@@ -8,7 +8,7 @@
 
 
 int readInfoFromBMP();
-int revealInfoToBMP();
+int hideInfoToBMP();
 void errorExit(const char *msg);
 
 int main(int argc, const char **argv)
@@ -17,18 +17,18 @@ int main(int argc, const char **argv)
 
     if(argc == 1)
     {
-        sprintf(msg, "Usage:\n\t%s [reveal|read] [argument]", argv[0]);
+        sprintf(msg, "Usage:\n\t%s [hide|read] [argument]", argv[0]);
         errorExit(msg);
     }
 
-    if (!strcmp(argv[1], "reveal"))
+    if (!strcmp(argv[1], "hide"))
     {
         if (argc != 5)
         {
-            sprintf(msg, "Usage:\n\t%s reveal src dest info", argv[0]);
+            sprintf(msg, "Usage:\n\t%s hide src dest info", argv[0]);
             errorExit(msg);
         }
-        revealInfoToBMP(argv[2], argv[3], argv[4]);
+        hideInfoToBMP(argv[2], argv[3], argv[4]);
     }
     else if(!strcmp(argv[1], "read"))
     {
@@ -92,7 +92,7 @@ int readInfoFromBMP(const char *src)
     fclose(fp);
 }
 
-int revealInfoToBMP(const char *src, const char *dest, const char *info)
+int hideInfoToBMP(const char *src, const char *dest, const char *info)
 {
     FILE *fp;
     BFHEADER bfhdr;
@@ -128,9 +128,9 @@ int revealInfoToBMP(const char *src, const char *dest, const char *info)
         printf("read failed!\n");
     }
 
-    // reveal information
+    // hide information
 
-    revealInfo(rgbData, &bihdr, info, strlen(info));
+    hideInfo(rgbData, &bihdr, info, strlen(info));
     bmp2file(dest, &bfhdr, &bihdr, rgbData);
 
     printf("%s wrote!\n", dest);

@@ -175,7 +175,7 @@ int bmp2file(const char *fname, const BFHEADER *bfhdrp, const BIHEADER *bihdrp, 
     fclose(newBMP);
 }
 
-int revealInfo(RGB** rgbData, const BIHEADER *bihdrp, const char *info, uint16_t len)
+int hideInfo(RGB** rgbData, const BIHEADER *bihdrp, const char *info, uint16_t len)
 {
     int index = 0;
 
