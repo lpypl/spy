@@ -6,12 +6,9 @@
 #include "mutils.h"
 #include "mbmp.h"
 
+// void errorExit(const char *msg);
 
-int readInfoFromBMP();
-int hideInfoToBMP();
-void errorExit(const char *msg);
-
-int main(int argc, const char **argv)
+/* int main(int argc, const char **argv)
 {
     char msg[100]; 
 
@@ -47,52 +44,9 @@ void errorExit(const char *msg)
 {
     printf("\n%s\n", msg);
     exit(-1);
-}
+} */
 
-
-int readInfoFromBMP(const char *src)
-{
-    FILE *fp;
-    BFHEADER bfhdr;
-    BIHEADER bihdr;
-
-    if ((fp = fopen(src, "rb")) == NULL)
-    {
-        printf("BMP file load failed!\n");
-        return 1;
-    }
-    if (fread(&bfhdr, sizeof(bfhdr), 1, fp) < 1)
-    {
-        printf("Reading BMP file header failed!\n");
-        return 1;
-    }
-
-    printf("BMP file header:\n");
-    printBfhdr(&bfhdr);
-
-    if (fread(&bihdr, sizeof(bihdr), 1, fp) < 1)
-    {
-        printf("Reading BMP info header failed!\n");
-        return 1;
-    }
-
-    printf("BMP info header:\n");
-    printBihdr(&bihdr);
-
-    // read bmp data
-    RGB **rgbData = BMPReaderRead(&bfhdr, &bihdr, fp);
-    if (!rgbData)
-    {
-        printf("read failed!\n");
-    }
-
-    readInfo(rgbData, &bihdr);
-
-    BMPReaderCleanup(rgbData, &bihdr);
-    fclose(fp);
-}
-
-int hideInfoToBMP(const char *src, const char *dest, const char *info)
+int main(const char *src, const char *dest, const char *info)
 {
     FILE *fp;
     BFHEADER bfhdr;
@@ -130,7 +84,6 @@ int hideInfoToBMP(const char *src, const char *dest, const char *info)
 
     // hide information
 
-    hideInfo(rgbData, &bihdr, info, strlen(info));
     bmp2file(dest, &bfhdr, &bihdr, rgbData);
 
     printf("%s wrote!\n", dest);

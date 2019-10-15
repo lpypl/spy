@@ -36,6 +36,11 @@ typedef struct
     uint8_t b;
 } RGB;
 
+typedef struct 
+{
+    uint8_t y;
+    uint8_t g
+}
 
 #pragma pack(pop)
 #endif
