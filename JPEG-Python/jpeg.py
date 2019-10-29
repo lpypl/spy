@@ -307,3 +307,45 @@ def midSigns2binaryCode(midSignsList, type):
             #     key = "({}/{})".format(hex(sign[0])[-1].upper(), hex(sign[1])[-1].upper())
             #     binaryData += acTable[key][1]
             #     binaryData += binCode
+
+
+def int2ByteBinary(num):
+    return  bin(num)[2:].zfill(8)
+
+def int2DoubleByteBinary(num):
+    return  bin(num)[2:].zfill(16)
+
+def huffmanTable2BinaryData(dcl, dcc, acl, acc):
+    binaryData = ""
+
+    # DC 0
+    binaryData += int2ByteBinary(0x00)
+    for category in range(1, 17):
+        categoryCount = 0
+        for item in dcl:
+            if item[1] == category:
+                categoryCount += 1
+        binaryData += int2ByteBinary(categoryCount)
+    for item in dcl:
+        binaryData += int2ByteBinary(item[0])
+
+    # DC 1
+    binaryData += int2ByteBinary(0x01)
+    for category in range(1, 17):
+        categoryCount = 0
+        for item in dcc:
+            if item[1] == category:
+                categoryCount += 1
+        binaryData += int2ByteBinary(categoryCount)
+    for item in dcc:
+        binaryData += int2ByteBinary(item[0])
+
+    #
+    # AC 0
+    # AC编码比较麻烦，并不能按照顺序抄下来
+    raise Exception("weishixian")
+
+
+    binaryData = int2ByteBinary(0xFF) + int2ByteBinary(0xC4) + int2DoubleByteBinary(len(binaryData)//8 + 2) + binaryData
+
+    return binaryData

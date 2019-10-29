@@ -1,7 +1,9 @@
 import numpy as np
 import cv2
 import math
+
 from jpeg import *
+
 
 def showalways(img, title = "Window Name"):
     """
@@ -53,33 +55,56 @@ def testSampleAndDct():
     newrgb = cv2.cvtColor(newycrcb, cv2.COLOR_YCR_CB2RGB)
     showalways(newrgb)
 
-rgb = cv2.imread('./Pictures/Koala.bmp')
-ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCR_CB)
 
-y, cr, cb = ycrcb2sample(ycrcb)
-yblocks, yh, yw = data2blocks(y)
+def img2jpegBinaryDataStringFile():
+    rgb = cv2.imread('./Pictures/Koala.bmp')
+    ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCR_CB)
 
-tyblocks = yblocks[:]
-for i in range(len(yblocks)):
-    tyblocks[i] = quantifyBlock(yblocks[i], 'L')
+    y, cr, cb = ycrcb2sample(ycrcb)
+    yblocks, yh, yw = data2blocks(y)
 
-zigList = [zigzagOrder(blk) for blk in tyblocks]
-npzigList = np.array(zigList)
+    tyblocks = yblocks[:]
+    for i in range(len(yblocks)):
+        tyblocks[i] = quantifyBlock(yblocks[i], 'L')
 
-# 差分 DC
-diffZigList = diffBlocksDC(zigList)
-npdiffzigList = np.array(diffZigList)
+    zigList = [zigzagOrder(blk) for blk in tyblocks]
+    npzigList = np.array(zigList)
 
-midSignsList = []
-for zigblock in diffZigList:
-    midSignsList.append(zigzag2midSigns(zigblock))
+    # 差分 DC
+    diffZigList = diffBlocksDC(zigList)
+    npdiffzigList = np.array(diffZigList)
 
-npMidSignsList = np.array(midSignsList)
+    midSignsList = []
+    for zigblock in diffZigList:
+        midSignsList.append(zigzag2midSigns(zigblock))
 
-binaryData = midSigns2binaryCode(midSignsList, 'L')
-# main
+    # npMidSignsList = np.array(midSignsList)
+    binaryData = midSigns2binaryCode(midSignsList, 'L')
 
-npBinaryData = np.array(binaryData)
+    # bin str to file
+    fout = open("files/jpeg-data-binary-string.txt", 'w')
+    fout.write(binaryData)
+    fout.close()
+
+    # hex str to file
+    # hexData = hex(eval('0b' + binaryData))
+    # fout = open("files/jpeg-data-hex-string.txt", 'w')
+    # fout.write(hexData)
+    # fout.close()
 
 
+def huffmanTable2BinaryDataStringFile():
+    binaryData = huffmanTable2BinaryData(LuminanceDCCoefficientDifferencesTable, ChrominanceDCCoefficientDifferencesTable,
+                            acLuminanceTable, acChrominanceTable)
+    fout = open("files/jpeg-huffman-binary-string.txt", 'w')
+    fout.write(binaryData)
+    fout.close()
 
+    # hex str to file
+    # hexData = hex(eval('0b' + binaryData))
+    # fout = open("files/jpeg-huffman-hex-string.txt", 'w')
+    # fout.write(hexData)
+    # fout.close()
+
+
+huffmanTable2BinaryDataStringFile()
