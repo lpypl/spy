@@ -1,52 +1,9 @@
 import copy
-
 import numpy as np
 import cv2
 import math
 
-LuminanceQuantizationTable = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
-                              [12, 12, 14, 19, 26, 58, 60, 55],
-                              [14, 13, 16, 24, 40, 57, 69, 56],
-                              [14, 17, 22, 29, 51, 87, 80, 62],
-                              [18, 22, 37, 56, 68, 109, 103, 77],
-                              [24, 35, 55, 64, 81, 104, 113, 92],
-                              [49, 64, 78, 87, 103, 121, 120, 101],
-                              [72, 92, 95, 98, 112, 100, 103, 99]], dtype=np.int)
-
-ChrominanceQuantizationTable = np.array([[17, 18, 24, 47, 99, 99, 99, 99],
-                              [18, 21, 26, 66, 99, 99, 99, 99],
-                              [14, 13, 16, 24, 40, 57, 69, 56],
-                              [24, 26, 56, 99, 99, 99, 99, 99],
-                              [47, 66, 99, 99, 99, 99, 99, 99],
-                              [99, 99, 99, 99, 99, 99, 99, 99],
-                              [99, 99, 99, 99, 99, 99, 99, 99],
-                              [99, 99, 99, 99, 99, 99, 99, 99]], dtype=np.int)
-
-LuminanceDCCoefficientDifferencesTable = [(0, 2, '00'),
-                                          (1, 3, '010'),
-                                          (2, 3, '011'),
-                                          (3, 3, '100'),
-                                          (4, 3, '101'),
-                                          (5, 3, '110'),
-                                          (6, 4, '1110'),
-                                          (7, 5, '11110'),
-                                          (8, 6, '111110'),
-                                          (9, 7, '1111110'),
-                                          (10, 8, '11111110'),
-                                          (11, 9, '111111110')]
-
-ChrominanceDCCoefficientDifferencesTable = [(0, 2, '00'),
-                                            (1, 2, '01'),
-                                            (2, 2, '10'),
-                                            (3, 3, '110'),
-                                            (4, 4, '1110'),
-                                            (5, 5, '11110'),
-                                            (6, 6, '111110'),
-                                            (7, 7, '1111110'),
-                                            (8, 8, '11111110'),
-                                            (9, 9, '111111110'),
-                                            (10, 10, '1111111110'),
-                                            (11, 11, '11111111110')]
+from jpegTable import *
 
 # 4:2:2
 def ycrcb2sample(ycrcb):
@@ -151,10 +108,12 @@ def quantifyBlock(originBlock, type):
     :param type: ‘H’ for luminance, 'C' for Chrominance
     :return: dct并量化后的 8x8 block - np.int
     """
-    if type == 'H':
+    if type == 'L':
         qtable = LuminanceQuantizationTable
     elif type == 'C':
         qtable = ChrominanceQuantizationTable
+    else:
+        raise TypeError("type must be L or C")
 
     block = originBlock.astype(np.float32)
     norm_block = block - 128
@@ -174,10 +133,12 @@ def inverseQuantifyBlock(originBlock, type):
     :param type: ‘H’ for luminance, 'C' for Chrominance
     :return: 反量化并逆dct之后的 8x8 block - np.uint8
     """
-    if type == 'H':
+    if type == 'L':
         qtable = LuminanceQuantizationTable
     elif type == 'C':
         qtable = ChrominanceQuantizationTable
+    else:
+        raise TypeError("type must be L or C")
 
     dct_block = (originBlock.astype(np.float32) * qtable)
     idct_block = cv2.idct(dct_block)
@@ -229,27 +190,51 @@ def diffBlocksDC(oriZigzagList):
 
 
 def intRealLength(val):
+    """
+    获取整数的二进制编码长度
+    :param val: int
+    :return: bin length
+    """
+    # 0 似乎只需要哈夫曼码
     if val == 0:
         return 0
     else:
         return int(math.log(abs(val), 2)) + 1
 
 
-def int2code(val):
-    valcode = bin(val)[2:]
+def int2LenAndCode(val):
+    """
+    返回一个整数的长度和编码
+    :param val: int value
+    :return: (length, binCode)
+    """
+    bitcnt = intRealLength(val)
+
+    if val == 0:
+        return (0, '')
+
     if val < 0:
-        valcode = '1' + valcode[1:]
-    return valcode
+        binCode = bin(2 ** bitcnt - 1 + val)[2:].zfill(bitcnt)
+    else:
+        binCode = bin(val)[2:]
+
+    return (bitcnt, binCode)
 
 
 def zigzag2midSigns(zigzagBlock):
     """
     zigzagBlock to mid signs
+    暂且认为若DC值为0，则只需要一个哈夫曼码，而不需要0的二进制代码
     :param zigzagBlock: 经之字型排列之后的一个block - int list
     :return: midSigns
     """
+
+    # DC
     midSigns = []
-    midSigns.append((zigzagBlock[0], intRealLength(zigzagBlock[0]), int2code(zigzagBlock[0])))
+    # binLen, binCode = int2LenAndCode(zigzagBlock[0])
+    # midSigns.append((zigzagBlock[0], binLen, dcTable[binLen][2], binCode))
+    midSigns.append(zigzagBlock[0])
+    # AC
     zeroCount = 0
     for i in range(1, len(zigzagBlock)) :
         val = zigzagBlock[i]
@@ -263,11 +248,62 @@ def zigzag2midSigns(zigzagBlock):
         if val == 0:
             zeroCount += 1
             if zeroCount == 16:
+                # binLen, binCode = int2LenAndCode(0)
+                # midSigns.append((15, 0, binLen, binCode))
                 midSigns.append((15, 0))
                 zeroCount = 0
         # non-zero
         else:
-            midSigns.append((zeroCount, val, intRealLength(val), int2code(val)))
+            # binLen, binCode = int2LenAndCode(val)
+            # midSigns.append((zeroCount, val, binLen, binCode))
+            midSigns.append((zeroCount, val))
             zeroCount = 0
 
     return midSigns
+
+
+def midSigns2binaryCode(midSignsList, type):
+    """
+    zigzagBlock to mid signs
+    暂且认为若DC值为0，则只需要一个哈夫曼码，而不需要0的二进制代码
+    :param zigzagBlock: 经之字型排列之后的一个block - int list
+    :return: midSigns
+    """
+
+    if type == 'L':
+        dcTable = LuminanceDCCoefficientDifferencesTable
+        acTable = acLuminanceTable
+    elif type == 'C':
+        dcTable = ChrominanceDCCoefficientDifferencesTable
+        acTable = acChrominanceTable
+    else:
+        raise TypeError("type must be L or C")
+
+    binaryData = ""
+
+    for midSigns in midSignsList:
+
+        # DC
+        binLen, binCode = int2LenAndCode(midSigns[0])
+        binaryData += dcTable[binLen][2] + binCode
+
+        # AC
+        for sign in midSigns[1:]:
+            # 若sign[1]为0，则binCode为空字符串
+            binLen, binCode = int2LenAndCode(sign[1])
+            key = "{}/{}".format(hex(sign[0])[-1].upper(), hex(binLen)[-1].upper())
+            binaryData += acTable[key][1]
+            binaryData += binCode
+
+    return binaryData
+
+            # EOB
+            # if sign[0] == 0 and sign[1] == 0:
+            #     binaryData += acTable['0/0'][1]
+            #     return binaryData
+            # elif sign[0] == 15 and sign[1] == 0:
+            #     binaryData += acTable['F/0'][1]
+            # else:
+            #     key = "({}/{})".format(hex(sign[0])[-1].upper(), hex(sign[1])[-1].upper())
+            #     binaryData += acTable[key][1]
+            #     binaryData += binCode

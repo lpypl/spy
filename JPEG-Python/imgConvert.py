@@ -29,8 +29,8 @@ def testSampleAndDct():
 
     tyblocks = yblocks[:]
     for i in range(len(yblocks)):
-        tyblocks[i] = quantifyBlock(yblocks[i], 'H')
-        tyblocks[i] = inverseQuantifyBlock(tyblocks[i], 'H')
+        tyblocks[i] = quantifyBlock(yblocks[i], 'L')
+        tyblocks[i] = inverseQuantifyBlock(tyblocks[i], 'L')
     newy = blocks2data(tyblocks, yh, yw)
 
     tcrblocks = crblocks[:]
@@ -53,25 +53,6 @@ def testSampleAndDct():
     newrgb = cv2.cvtColor(newycrcb, cv2.COLOR_YCR_CB2RGB)
     showalways(newrgb)
 
-def getDiffCode(val):
-    """
-    将差分值转换为相应的编码
-    """
-    if val == 0:
-        bitcnt = 0
-        valcode = '0'
-
-    else:
-        bitcnt =  int(math.log(abs(val), 2)) + 1
-
-        if val < 0:
-            valcode = bin(2**bitcnt-1+val)[2:].zfill(bitcnt)
-        else:
-            valcode = bin(val)[2:]
-
-    return valcode
-
-
 rgb = cv2.imread('./Pictures/Koala.bmp')
 ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCR_CB)
 
@@ -80,7 +61,7 @@ yblocks, yh, yw = data2blocks(y)
 
 tyblocks = yblocks[:]
 for i in range(len(yblocks)):
-    tyblocks[i] = quantifyBlock(yblocks[i], 'H')
+    tyblocks[i] = quantifyBlock(yblocks[i], 'L')
 
 zigList = [zigzagOrder(blk) for blk in tyblocks]
 npzigList = np.array(zigList)
@@ -93,7 +74,12 @@ midSignsList = []
 for zigblock in diffZigList:
     midSignsList.append(zigzag2midSigns(zigblock))
 
+npMidSignsList = np.array(midSignsList)
+
+binaryData = midSigns2binaryCode(midSignsList, 'L')
 # main
+
+npBinaryData = np.array(binaryData)
 
 
 
