@@ -61,8 +61,8 @@ def qt2hex(qtable):
             print(hex(val), end=', ')
         print()
 
-def img2jpegBinaryDataStringFile():
-    rgb = cv2.imread('./Pictures/64x64.jpeg')
+def img2jpegBinaryDataStringFile(fname):
+    rgb = cv2.imread(fname)
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCR_CB)
 
     y, cr, cb = ycrcb2sample(ycrcb)
@@ -116,6 +116,6 @@ def huffmanTable2BinaryDataStringFile():
     # fout.close()
 
 
-huffmanTable2BinaryDataStringFile()
-# img2jpegBinaryDataStringFile()
+# huffmanTable2BinaryDataStringFile()
+img2jpegBinaryDataStringFile("Pictures/squirrel-4554379_1920.jpg")
 # qt2hex(ChrominanceQuantizationTable)

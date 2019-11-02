@@ -34,7 +34,26 @@ end:
     fclose(fpout);
 }
 
+void slashImgData(const char *infname, const char *outfname)
+{
+    FILE *finp = fopen(infname, "rb");
+    FILE *foutp = fopen(outfname, "wb");
+
+    int ch;
+    while((ch = getc(finp)) != -1) 
+    {
+        putc(ch, foutp);
+        if(ch == 0xFF)
+            putc(0x00, foutp);
+    }
+
+    fclose(finp);
+    fclose(foutp);
+}
+
 int main()
 {
-    bin_str_to_bin_data("jpeg-huffman-binary-string.txt", "jpeg-huffman-binary-string.bin");
+    // bin_str_to_bin_data("jpeg-huffman-binary-string.txt", "jpeg-huffman-binary-string.bin");
+    bin_str_to_bin_data("jpeg-data-binary-string.txt", "jpeg-data-binary-string.bin");
+    slashImgData("jpeg-data-binary-string.bin", "jpeg-data-binary-string-slash.bin");
 }
