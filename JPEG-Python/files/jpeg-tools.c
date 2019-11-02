@@ -36,5 +36,5 @@ end:
 
 int main()
 {
-    bin_str_to_bin_data("jpeg-huffman-binary-string.txt", "jpeg-huffman-binary.bin");
+    bin_str_to_bin_data("jpeg-huffman-binary-string.txt", "jpeg-huffman-binary-string.bin");
 }

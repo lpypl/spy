@@ -55,9 +55,14 @@ def testSampleAndDct():
     newrgb = cv2.cvtColor(newycrcb, cv2.COLOR_YCR_CB2RGB)
     showalways(newrgb)
 
+def qt2hex(qtable):
+    for vallist in qtable:
+        for val in vallist:
+            print(hex(val), end=', ')
+        print()
 
 def img2jpegBinaryDataStringFile():
-    rgb = cv2.imread('./Pictures/Koala.bmp')
+    rgb = cv2.imread('./Pictures/64x64.jpeg')
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCR_CB)
 
     y, cr, cb = ycrcb2sample(ycrcb)
@@ -80,6 +85,10 @@ def img2jpegBinaryDataStringFile():
 
     # npMidSignsList = np.array(midSignsList)
     binaryData = midSigns2binaryCode(midSignsList, 'L')
+
+    shouldFill = (len(binaryData)+7)//8 * 8 - len(binaryData)
+    print("should fill is", shouldFill)
+    binaryData += '0'*shouldFill
 
     # bin str to file
     fout = open("files/jpeg-data-binary-string.txt", 'w')
@@ -108,3 +117,5 @@ def huffmanTable2BinaryDataStringFile():
 
 
 huffmanTable2BinaryDataStringFile()
+# img2jpegBinaryDataStringFile()
+# qt2hex(ChrominanceQuantizationTable)

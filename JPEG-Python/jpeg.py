@@ -308,6 +308,8 @@ def midSigns2binaryCode(midSignsList, type):
             #     binaryData += acTable[key][1]
             #     binaryData += binCode
 
+def int2FourBits(num):
+    return  bin(num)[2:].zfill(4)
 
 def int2ByteBinary(num):
     return  bin(num)[2:].zfill(8)
@@ -342,9 +344,34 @@ def huffmanTable2BinaryData(dcl, dcc, acl, acc):
 
     #
     # AC 0
-    # AC编码比较麻烦，并不能按照顺序抄下来
-    raise Exception("weishixian")
+    binaryData += int2ByteBinary(0x10)
+    for category in range(1, 17):
+        categoryCount = 0
+        for item in acl.values():
+            if item[0] == category:
+                categoryCount += 1
+        binaryData += int2ByteBinary(categoryCount)
+    aclItems = [val for val in acl.items()]
+    aclItems.sort(key=lambda a:a[1][1])
+    aclCodeList = [val[0] for val in aclItems]
+    for key in aclCodeList:
+        binaryData += int2FourBits(eval("0x"+key.split('/')[0]))
+        binaryData += int2FourBits(eval("0x"+key.split('/')[1]))
 
+    # AC 1
+    binaryData += int2ByteBinary(0x11)
+    for category in range(1, 17):
+        categoryCount = 0
+        for item in acc.values():
+            if item[0] == category:
+                categoryCount += 1
+        binaryData += int2ByteBinary(categoryCount)
+    accItems = [val for val in acc.items()]
+    accItems.sort(key=lambda a:a[1][1])
+    accCodeList = [val[0] for val in accItems]
+    for key in accCodeList:
+        binaryData += int2FourBits(eval("0x"+key.split('/')[0]))
+        binaryData += int2FourBits(eval("0x"+key.split('/')[1]))
 
     binaryData = int2ByteBinary(0xFF) + int2ByteBinary(0xC4) + int2DoubleByteBinary(len(binaryData)//8 + 2) + binaryData
 
