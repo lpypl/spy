@@ -1,4 +1,4 @@
-from jpeg import *
+from pysrc.jpeg import *
 
 
 def showalways(img, title = "Window Name"):
@@ -136,4 +136,8 @@ def img2jpegBinaryDataStringFile_Colorful(fname):
     fout.write(binaryData)
     fout.close()
 
-img2jpegBinaryDataStringFile_Colorful("Pictures/squirrel-4554379_1920.jpg")
+def main():
+    img2jpegBinaryDataStringFile_Colorful("Pictures/squirrel.jpg")
+
+if __name__ == "__main__":
+    main()

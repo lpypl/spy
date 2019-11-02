@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "jpeg-binary-tools.h"
 
+/**
+ * 将文本形式的01流转换为二进制文件
+ */ 
 void bin_str_to_bin_data(const char * str_file, const char *bin_file)
 {
     FILE *fpin = fopen(str_file, "r");
@@ -34,6 +38,9 @@ end:
     fclose(fpout);
 }
 
+/**
+ * 在二进制文件中的 0xFF 后添加 0x00
+ */ 
 void slashImgData(const char *infname, const char *outfname)
 {
     FILE *finp = fopen(infname, "rb");
@@ -49,11 +56,4 @@ void slashImgData(const char *infname, const char *outfname)
 
     fclose(finp);
     fclose(foutp);
-}
-
-int main()
-{
-    // bin_str_to_bin_data("jpeg-huffman-binary-string.txt", "jpeg-huffman-binary-string.bin");
-    bin_str_to_bin_data("jpeg-data-binary-string.txt", "jpeg-data-binary-string.bin");
-    slashImgData("jpeg-data-binary-string.bin", "jpeg-data-binary-string-slash.bin");
 }

@@ -1,9 +1,8 @@
 import copy
-import numpy as np
 import cv2
 import math
 
-from jpegTable import *
+from pysrc.jpegTable import *
 
 # 4:2:2
 def ycrcb2sample(ycrcb):
