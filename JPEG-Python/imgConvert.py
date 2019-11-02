@@ -1,7 +1,3 @@
-import numpy as np
-import cv2
-import math
-
 from jpeg import *
 
 
@@ -55,29 +51,22 @@ def testSampleAndDct():
     newrgb = cv2.cvtColor(newycrcb, cv2.COLOR_YCR_CB2RGB)
     showalways(newrgb)
 
-def qt2hex(qtable):
-    for vallist in qtable:
-        for val in vallist:
-            print(hex(val), end=', ')
-        print()
-
 def img2jpegBinaryDataStringFile(fname):
     rgb = cv2.imread(fname)
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCR_CB)
 
-    y, cr, cb = ycrcb2sample(ycrcb)
-    yblocks, yh, yw = data2blocks(y)
-
+    # y, cr, cb = ycrcb2sample(ycrcb)
+    yblocks, yh, yw = data2blocks(ycrcb[:,:,0])
     tyblocks = yblocks[:]
     for i in range(len(yblocks)):
         tyblocks[i] = quantifyBlock(yblocks[i], 'L')
 
     zigList = [zigzagOrder(blk) for blk in tyblocks]
-    npzigList = np.array(zigList)
+    # npzigList = np.array(zigList)
 
     # 差分 DC
     diffZigList = diffBlocksDC(zigList)
-    npdiffzigList = np.array(diffZigList)
+    # npdiffzigList = np.array(diffZigList)
 
     midSignsList = []
     for zigblock in diffZigList:
@@ -95,13 +84,6 @@ def img2jpegBinaryDataStringFile(fname):
     fout.write(binaryData)
     fout.close()
 
-    # hex str to file
-    # hexData = hex(eval('0b' + binaryData))
-    # fout = open("files/jpeg-data-hex-string.txt", 'w')
-    # fout.write(hexData)
-    # fout.close()
-
-
 def huffmanTable2BinaryDataStringFile():
     binaryData = huffmanTable2BinaryData(LuminanceDCCoefficientDifferencesTable, ChrominanceDCCoefficientDifferencesTable,
                             acLuminanceTable, acChrominanceTable)
@@ -109,13 +91,49 @@ def huffmanTable2BinaryDataStringFile():
     fout.write(binaryData)
     fout.close()
 
-    # hex str to file
-    # hexData = hex(eval('0b' + binaryData))
-    # fout = open("files/jpeg-huffman-hex-string.txt", 'w')
-    # fout.write(hexData)
-    # fout.close()
+def img2jpegBinaryDataStringFile_Colorful(fname):
+    ycrcb = cv2.cvtColor(cv2.imread(fname), cv2.COLOR_BGR2YCR_CB)
 
+    # 提取颜色通道
+    yblocks, yh, yw = data2blocks(ycrcb[:,:,0])
+    crblocks, crh, crw = data2blocks(ycrcb[:, :, 1])
+    cbblocks, cbh, cbw = data2blocks(ycrcb[:, :, 2])
 
-# huffmanTable2BinaryDataStringFile()
-img2jpegBinaryDataStringFile("Pictures/squirrel-4554379_1920.jpg")
-# qt2hex(ChrominanceQuantizationTable)
+    # 离散余弦变换 并 量化
+    for i in range(len(yblocks)):
+        yblocks[i] = quantifyBlock(yblocks[i], 'L')
+    for i in range(len(cbblocks)):
+        cbblocks[i] = quantifyBlock(cbblocks[i], 'C')
+    for i in range(len(crblocks)):
+        crblocks[i] = quantifyBlock(crblocks[i], 'C')
+
+    # z字型排列
+    yzigList = [zigzagOrder(blk) for blk in yblocks]
+    cbzigList = [zigzagOrder(blk) for blk in cbblocks]
+    crzigList = [zigzagOrder(blk) for blk in crblocks]
+
+    # 差分 DC
+    ydiffZigList = diffBlocksDC(yzigList)
+    cbdiffZigList = diffBlocksDC(cbzigList)
+    crdiffZigList = diffBlocksDC(crzigList)
+
+    midSignsTupleList = []
+    for i in range(len(ydiffZigList)):
+        midSignsTupleList.append((zigzag2midSigns(ydiffZigList[i]),
+                                  zigzag2midSigns(cbdiffZigList[i]),
+                                  zigzag2midSigns(crdiffZigList[i])))
+
+    # 中间符号转2进制编码（0-1文本）
+    binaryData = midSigns2binaryCode_Colorful(midSignsTupleList)
+
+    # 填充为整数字节
+    shouldFill = (len(binaryData)+7)//8 * 8 - len(binaryData)
+    print("should fill is", shouldFill)
+    binaryData += '0'*shouldFill
+
+    # bin str to file
+    fout = open("files/jpeg-data-binary-string.txt", 'w')
+    fout.write(binaryData)
+    fout.close()
+
+img2jpegBinaryDataStringFile_Colorful("Pictures/squirrel-4554379_1920.jpg")

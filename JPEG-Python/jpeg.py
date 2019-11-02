@@ -231,8 +231,6 @@ def zigzag2midSigns(zigzagBlock):
 
     # DC
     midSigns = []
-    # binLen, binCode = int2LenAndCode(zigzagBlock[0])
-    # midSigns.append((zigzagBlock[0], binLen, dcTable[binLen][2], binCode))
     midSigns.append(zigzagBlock[0])
     # AC
     zeroCount = 0
@@ -248,14 +246,10 @@ def zigzag2midSigns(zigzagBlock):
         if val == 0:
             zeroCount += 1
             if zeroCount == 16:
-                # binLen, binCode = int2LenAndCode(0)
-                # midSigns.append((15, 0, binLen, binCode))
                 midSigns.append((15, 0))
                 zeroCount = 0
         # non-zero
         else:
-            # binLen, binCode = int2LenAndCode(val)
-            # midSigns.append((zeroCount, val, binLen, binCode))
             midSigns.append((zeroCount, val))
             zeroCount = 0
 
@@ -297,16 +291,70 @@ def midSigns2binaryCode(midSignsList, type):
 
     return binaryData
 
-            # EOB
-            # if sign[0] == 0 and sign[1] == 0:
-            #     binaryData += acTable['0/0'][1]
-            #     return binaryData
-            # elif sign[0] == 15 and sign[1] == 0:
-            #     binaryData += acTable['F/0'][1]
-            # else:
-            #     key = "({}/{})".format(hex(sign[0])[-1].upper(), hex(sign[1])[-1].upper())
-            #     binaryData += acTable[key][1]
-            #     binaryData += binCode
+def midSigns2binaryCode_Colorful(midSignsTupleList):
+    """
+    zigzagBlock to mid signs
+    暂且认为若DC值为0，则只需要一个哈夫曼码，而不需要0的二进制代码
+    :param zigzagBlock: 经之字型排列之后的一个block - int list
+    :return: midSigns
+    """
+    binaryData = ""
+
+    for midSignsTuple in midSignsTupleList:
+
+        # 亮度
+        dcTable = LuminanceDCCoefficientDifferencesTable
+        acTable = acLuminanceTable
+
+        midSigns = midSignsTuple[0]
+
+        # DC
+        binLen, binCode = int2LenAndCode(midSigns[0])
+        binaryData += dcTable[binLen][2] + binCode
+
+        # AC
+        for sign in midSigns[1:]:
+            # 若sign[1]为0，则binCode为空字符串
+            binLen, binCode = int2LenAndCode(sign[1])
+            key = "{}/{}".format(hex(sign[0])[-1].upper(), hex(binLen)[-1].upper())
+            binaryData += acTable[key][1]
+            binaryData += binCode
+
+        #色度 1
+        dcTable = ChrominanceDCCoefficientDifferencesTable
+        acTable = acChrominanceTable
+
+        midSigns = midSignsTuple[1]
+        # DC
+        binLen, binCode = int2LenAndCode(midSigns[0])
+        binaryData += dcTable[binLen][2] + binCode
+
+        # AC
+        for sign in midSigns[1:]:
+            # 若sign[1]为0，则binCode为空字符串
+            binLen, binCode = int2LenAndCode(sign[1])
+            key = "{}/{}".format(hex(sign[0])[-1].upper(), hex(binLen)[-1].upper())
+            binaryData += acTable[key][1]
+            binaryData += binCode
+
+        #色度 2
+        dcTable = ChrominanceDCCoefficientDifferencesTable
+        acTable = acChrominanceTable
+
+        midSigns = midSignsTuple[2]
+        # DC
+        binLen, binCode = int2LenAndCode(midSigns[0])
+        binaryData += dcTable[binLen][2] + binCode
+
+        # AC
+        for sign in midSigns[1:]:
+            # 若sign[1]为0，则binCode为空字符串
+            binLen, binCode = int2LenAndCode(sign[1])
+            key = "{}/{}".format(hex(sign[0])[-1].upper(), hex(binLen)[-1].upper())
+            binaryData += acTable[key][1]
+            binaryData += binCode
+
+    return binaryData
 
 def int2FourBits(num):
     return  bin(num)[2:].zfill(4)
@@ -318,6 +366,14 @@ def int2DoubleByteBinary(num):
     return  bin(num)[2:].zfill(16)
 
 def huffmanTable2BinaryData(dcl, dcc, acl, acc):
+    """
+    将四个哈夫曼表转换为 binary string
+    :param dcl: dc 亮度表
+    :param dcc: dc 色度表
+    :param acl: ac 亮度表
+    :param acc: ac 色度表
+    :return:
+    """
     binaryData = ""
 
     # DC 0
