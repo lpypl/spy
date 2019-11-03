@@ -16,5 +16,6 @@ void print_binary(int orinum, size_t len, uint8_t signal);
 void skip_segment(FILE *infp);
 uint16_t read_uint16_bigend(FILE *foutp);
 void print_image_data();
+void write_image_data_to_file(const char *outfile);
 
 #endif

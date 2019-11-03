@@ -172,13 +172,17 @@ uint8_t next_bit()
 {
     if (__next_bit_pos < 0)
     {
-        if (__next_bit_item == jpeg_data.size() - 1)
-            throw 1;
-        else
-        {
+        // if (__next_bit_item == jpeg_data.size() - 1)
+        // {
+        //     printf("end of file binary data....... %ld\n", __next_bit_item);
+        //     throw 1;
+        // }
+        // else
+        // {
+            printf("%ld\n", __next_bit_item);
             __next_bit_item += 1;
             __next_bit_pos = 7;
-        }
+        // }
     }
 
     uint8_t bit = (jpeg_data[__next_bit_item] >> __next_bit_pos) & 0x1;
@@ -362,9 +366,17 @@ void read_jpeg(const char *infile)
     printf("%d %02X\n", 1, channel_huffman_info[2]);
     printf("%d %02X\n", 1, channel_huffman_info[3]);
 
-    // print_image_data();
+    print_image_data();
     // print_huffman();
-    decode_jpeg_data();
+    // decode_jpeg_data();
+    // write_image_data_to_file("files/c-binary-data.bin");
+    // printf("%d\n", jpeg_data[147989]);
+    for (size_t i = 0; i < 147699*8; i++)
+    {
+        next_bit();
+    }
+    
+
 }
 
 void print_huffman()
@@ -386,8 +398,20 @@ void print_huffman()
 void print_image_data()
 {
     printf("image data length is %lu\n", jpeg_data.size());
-    for (auto b = jpeg_data.begin(); b != jpeg_data.end(); b++)
+    // for (auto b = jpeg_data.begin(); b != jpeg_data.end(); b++)
+    // {
+    //     printf("%02X ", *b);
+    // }
+}
+
+void write_image_data_to_file(const char *outfile)
+{
+    FILE *outfp = fopen(outfile, "w");
+    for (size_t i = 0; i < jpeg_data.size(); i++)
     {
-        printf("%02X ", *b);
+        putc(jpeg_data[i], outfp);
     }
+    fclose(outfp);
+    printf("image data write to %s\n", outfile);
+    
 }
