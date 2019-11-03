@@ -21,6 +21,10 @@ vector<uint8_t> jpeg_data;
 size_t __next_bit_item = 0;
 //哪一位uint8_t
 int __next_bit_pos = 7;
+vector<uint8_t>::const_iterator __next_bit_iter;
+bool __next_bit_initial = false;
+long read_ct = 0;
+long block_ct = 0;
 
 /**
  * 按大端序读取 uint16_t
@@ -170,19 +174,19 @@ error_or_eof:
  */
 uint8_t next_bit()
 {
-    if (__next_bit_pos < 0)
+    if (__next_bit_pos == -1)
     {
-        // if (__next_bit_item == jpeg_data.size() - 1)
-        // {
-        //     printf("end of file binary data....... %ld\n", __next_bit_item);
-        //     throw 1;
-        // }
-        // else
-        // {
-            printf("%ld\n", __next_bit_item);
+        if (__next_bit_item == jpeg_data.size()-1)
+        {
+            printf("end of file binary data....... %ld\n", __next_bit_item);
+            throw 1;
+        }
+        else
+        {
+            // printf("%ld\n", __next_bit_item);
             __next_bit_item += 1;
             __next_bit_pos = 7;
-        // }
+        }
     }
 
     uint8_t bit = (jpeg_data[__next_bit_item] >> __next_bit_pos) & 0x1;
@@ -234,6 +238,7 @@ void decode_jpeg_data()
                 while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
                 {
                     code += next_bit_string();
+                    // printf("dc not found!!!\n");
                 }
                 len_of_dc_signal = huffman_tables[dc_map_index][code];
                 // printf("code is %s, %02lX\n", code.c_str(), len_of_dc_signal);
@@ -267,6 +272,7 @@ void decode_jpeg_data()
                     while (huffman_tables[ac_map_index].find(code) == huffman_tables[ac_map_index].end())
                     {
                         code += next_bit_string();
+                        // printf("ac not found!!!\n");
                     }
                     ac_zero = huffman_tables[ac_map_index][code] >> 4;
                     len_of_ac_signal = huffman_tables[ac_map_index][code] & 0x0F;
@@ -275,10 +281,9 @@ void decode_jpeg_data()
                     if (len_of_ac_signal == 0 && ac_zero == 0)
                     {
                         printf("(EOB), ");
-                        // exit(0);
                         break;
                     }
-                    else if (len_of_ac_signal == 15 && ac_zero == 0)
+                    else if (len_of_ac_signal == 0 && ac_zero == 15)
                     {
                         printf("(ZRL), ");
                     }
@@ -291,6 +296,7 @@ void decode_jpeg_data()
                         {
                             ac_signal <<= 1;
                             ac_signal |= next_bit();
+                            // printf("ac not found!!! %ld/%ld\n", ac_zero, len_of_ac_signal);
                         }
                         if (!isPositive)
                         {
@@ -301,9 +307,10 @@ void decode_jpeg_data()
                 }
                 printf("\t");
             }
+            block_ct++;
             printf("\n");
         }
-        printf("DC found: bits is %d\n", next_bit());
+        // printf("DC found: bits is %d\n", next_bit());
     }
     catch (int error)
     {
@@ -368,15 +375,15 @@ void read_jpeg(const char *infile)
 
     print_image_data();
     // print_huffman();
-    // decode_jpeg_data();
-    // write_image_data_to_file("files/c-binary-data.bin");
-    // printf("%d\n", jpeg_data[147989]);
-    for (size_t i = 0; i < 147699*8; i++)
-    {
-        next_bit();
-    }
-    
-
+    decode_jpeg_data();
+    // write_image_data_to_file("../files/c-binary-data.bin");
+    // printf("%d\n", jpeg_data[147688]);
+    // for (size_t i = 0; i < 147690*8; i++)
+    // {
+    //     next_bit();
+    // }
+    printf("read count is %ld\n", read_ct);
+    printf("block count is %ld\n", block_ct);
 }
 
 void print_huffman()
