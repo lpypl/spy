@@ -101,7 +101,7 @@ void read_huffman(FILE *infp)
                 code = (code + 1) << layer_diff;
                 signal = getc(infp);
 
-                huffman_tables[huffman_type * 2 + huffman_id].insert({generate_code_string(code, layer+1), signal});
+                huffman_tables[huffman_type * 2 + huffman_id].insert({generate_code_string(code, layer + 1), signal});
                 // printf("%u %u\n", code, signal);
                 layer_diff = 0;
             }
@@ -191,11 +191,11 @@ uint8_t next_bit()
  */
 string next_bit_string()
 {
-    try 
+    try
     {
         return to_string(next_bit());
     }
-    catch(int errornum)
+    catch (int errornum)
     {
         throw errornum;
     }
@@ -206,7 +206,13 @@ void decode_jpeg_data()
     string code;
     int dc_map_index = 0;
     int ac_map_index = 0;
-    size_t len_of_signal = 0;
+    size_t len_of_dc_signal = 0;
+    size_t len_of_ac_signal = 0;
+    size_t ac_zero = 0;
+    int16_t ac_signal = 0;
+    int16_t dc_signal = 0;
+    bool isPositive;
+
     try
     {
         while (true)
@@ -220,15 +226,78 @@ void decode_jpeg_data()
 
                 // DC
                 // 先读一位，避免 00
+                code = "";
                 while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
                 {
                     code += next_bit_string();
                 }
-                len_of_signal = huffman_tables[dc_map_index][code];
-                printf("code is %s, %02X\n", code.c_str(), huffman_tables[dc_map_index][code]);
-                exit(0);
+                len_of_dc_signal = huffman_tables[dc_map_index][code];
+                // printf("code is %s, %02lX\n", code.c_str(), len_of_dc_signal);
 
+                if (len_of_dc_signal == 0)
+                {
+                    dc_signal = 0;
+                }
+                else
+                {
+                    dc_signal = 0;
+                    isPositive = next_bit() == 1;
+                    dc_signal |= 1;
+                    for (size_t i = 0; i < len_of_dc_signal - 1; i++)
+                    {
+                        dc_signal <<= 1;
+                        dc_signal |= next_bit();
+                    }
+                    if (!isPositive)
+                    {
+                        dc_signal = -dc_signal;
+                    }
+                }
+                printf("(%d), ", dc_signal);
+                // printf("(%ld, %d), ", len_of_dc_signal, dc_signal);
+
+                //AC
+                while (true)
+                {
+                    code = "";
+                    while (huffman_tables[ac_map_index].find(code) == huffman_tables[ac_map_index].end())
+                    {
+                        code += next_bit_string();
+                    }
+                    ac_zero = huffman_tables[ac_map_index][code] >> 4;
+                    len_of_ac_signal = huffman_tables[ac_map_index][code] & 0x0F;
+
+                    //EOB
+                    if (len_of_ac_signal == 0 && ac_zero == 0)
+                    {
+                        printf("(EOB), ");
+                        // exit(0);
+                        break;
+                    }
+                    else if (len_of_ac_signal == 15 && ac_zero == 0)
+                    {
+                        printf("(ZRL), ");
+                    }
+                    else
+                    {
+                        ac_signal = 0;
+                        isPositive = next_bit() == 1;
+                        ac_signal |= 1;
+                        for (size_t i = 0; i < len_of_ac_signal-1; i++)
+                        {
+                            ac_signal <<= 1;
+                            ac_signal |= next_bit();
+                        }
+                        if (!isPositive)
+                        {
+                            ac_signal = -ac_signal;
+                        }
+                        printf("(%ld, %d), ", ac_zero, ac_signal);
+                    }
+                }
+                printf("\t");
             }
+            printf("\n");
         }
         printf("DC found: bits is %d\n", next_bit());
     }

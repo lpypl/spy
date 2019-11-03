@@ -1,6 +1,7 @@
 from pysrc.jpeg import *
 import os
 
+npmidsignlist = []
 
 def showalways(img, title = "Window Name"):
     """
@@ -124,6 +125,10 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname):
         midSignsTupleList.append((zigzag2midSigns(ydiffZigList[i]),
                                   zigzag2midSigns(cbdiffZigList[i]),
                                   zigzag2midSigns(crdiffZigList[i])))
+
+
+    global npmidsignlist
+    npmidsignlist = np.array(midSignsTupleList)
 
     # 中间符号转2进制编码（0-1文本）
     binaryData = midSigns2binaryCode_Colorful(midSignsTupleList)
