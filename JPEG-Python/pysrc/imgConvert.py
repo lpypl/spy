@@ -1,5 +1,6 @@
 from pysrc.jpeg import *
 import os
+import itertools
 
 npmidsignlist = []
 
@@ -94,6 +95,49 @@ def huffmanTable2BinaryDataStringFile(outfile):
     fout.write(binaryData)
     fout.close()
 
+
+npsignsList = []
+npsignsList2 = []
+def hideInfoInAC(info, midSignsTupleList):
+    info_length = len(info)
+    infoList = []
+    for i in range(16):
+        infoList.append((info_length>>(15-i))&0x01)
+    for char in info:
+        for i in range(8):
+            infoList.append((ord(char)>>(7-i))&0x01)
+
+    signsList = list(itertools.chain(*midSignsTupleList))
+    global npsignsList, npsignsList2
+    npsignsList = np.array(signsList)
+
+    for iter_list in range(len(signsList)):
+        for iter_signs in range(1, len(signsList[iter_list])):
+            if signsList[iter_list][iter_signs][1] != 0\
+                and signsList[iter_list][iter_signs][1] != 1\
+                and len(str(signsList[iter_list][iter_signs][0])) > 1:
+
+                zero_len = signsList[iter_list][iter_signs][0]
+                val = signsList[iter_list][iter_signs][1]
+
+                if infoList[0] & 0x01 == 0:
+                    val &= 0b1111_1110
+                else:
+                    val |= 0b0000_0001
+                signsList[iter_list][iter_signs] = (zero_len, val)
+
+                # print("hide info ", val)
+
+                infoList = infoList[1:]
+                if len(infoList) == 0:
+                    npsignsList2 = np.array(signsList)
+                    return [(signsList[i*3], signsList[i*3+1], signsList[i*3+2])\
+                            for i in range(len(signsList)//3)]
+
+
+
+
+
 def img2jpegBinaryDataStringFile_Colorful(imname, txtname):
     ycrcb = cv2.cvtColor(cv2.imread(imname), cv2.COLOR_BGR2YCR_CB)
 
@@ -126,6 +170,7 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname):
                                   zigzag2midSigns(cbdiffZigList[i]),
                                   zigzag2midSigns(crdiffZigList[i])))
 
+    midSignsTupleList = hideInfoInAC("hello", midSignsTupleList)
 
     global npmidsignlist
     npmidsignlist = np.array(midSignsTupleList)

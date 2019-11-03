@@ -255,7 +255,10 @@ void decode_jpeg_data()
                     for (size_t i = 0; i < len_of_dc_signal - 1; i++)
                     {
                         dc_signal <<= 1;
-                        dc_signal |= next_bit();
+                        if(isPositive)
+                            dc_signal |= next_bit();
+                        else
+                            dc_signal |= (!next_bit());
                     }
                     if (!isPositive)
                     {
@@ -295,7 +298,11 @@ void decode_jpeg_data()
                         for (size_t i = 0; i < len_of_ac_signal-1; i++)
                         {
                             ac_signal <<= 1;
-                            ac_signal |= next_bit();
+                            if(isPositive)
+                                ac_signal |= next_bit();
+                            else
+                                ac_signal |= (!next_bit());
+                            
                             // printf("ac not found!!! %ld/%ld\n", ac_zero, len_of_ac_signal);
                         }
                         if (!isPositive)
