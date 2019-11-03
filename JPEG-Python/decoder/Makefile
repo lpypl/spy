@@ -1,8 +1,8 @@
 lpy-jpeg-decoder : decoder.o
-	gcc -o $@ $^
+	g++ -o $@ $^
 
-decoder.o : decoder.c jpeg.h
-	gcc -c $<
+decoder.o : decoder.cpp jpeg.h
+	g++ -c $<
 
 clean:
 	rm decoder.o lpy-jpeg-decoder
