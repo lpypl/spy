@@ -2,6 +2,7 @@
     "python.pythonPath": "/home/lpy/.lpyvenv/sci-qt5/bin/python",
     "files.associations": {
         "jpeg.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "string": "cpp"
     }
 }

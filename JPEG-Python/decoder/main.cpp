@@ -11,5 +11,5 @@ int main(int argc, const char **argv)
         return -1;
     }
     read_jpeg(argv[1]);
-    print_huffman();
+    // print_huffman();
 }

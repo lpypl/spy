@@ -3,8 +3,9 @@
 #include <map>
 #include <vector>
 #include <stdint.h>
+#include <string>
 
-extern std::vector<std::map<uint16_t, uint8_t>> huffman_tables;
+extern std::vector<std::map<std::string, uint8_t>> huffman_tables;
 void read_jpeg(const char *infile);
 void print_huffman();
 void read_jpeg(const char *infile);
