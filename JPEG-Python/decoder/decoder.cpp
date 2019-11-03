@@ -7,6 +7,9 @@
 #include "jpeg.h"
 #include "decoder.h"
 
+#define SKIP_COUNT 20
+#define LEAST_LEN 1
+
 using namespace std;
 
 //哈夫曼表
@@ -326,6 +329,18 @@ void decode_jpeg_data()
     }
 }
 
+int len_of_int_bin(int num)
+{
+    num = abs(num);
+    string bin;
+    while (num != 0)
+    {
+        bin.push_back((num % 2) + 0x30);
+        num /= 2;
+    }
+    return bin.size();
+}
+
 void read_info()
 {
     string code;
@@ -341,6 +356,7 @@ void read_info()
     uint16_t len_of_info = 0;
     size_t info_read_ct = 0;
     char *info_buf = nullptr;
+    int skip_count = SKIP_COUNT;
 
     try
     {
@@ -430,31 +446,43 @@ void read_info()
                         // printf("(%ld, %d), ", ac_zero, ac_signal);
 
                         //解析信息
-                        if (ac_signal != 0 && ac_signal != 1)
+                        if (ac_signal != 0 && ac_signal != 1 && len_of_int_bin(ac_signal) >= LEAST_LEN)
                         {
-                            if (info_read_ct < 16)
+
+                            if (skip_count != 0)
                             {
-                                len_of_info <<= 1;
-                                len_of_info |= ac_signal & 0x01;
-                            }
-                            else if(info_read_ct == 16)
-                            {
-                                printf("len_of_info is %d\n", len_of_info);
-                                info_buf = new char[len_of_info+1];
-                                memset(info_buf, 0, len_of_info+1);
+                                skip_count--;
                             }
                             else
                             {
-                                if((info_read_ct-16)/8 >= len_of_info)
+                                skip_count = SKIP_COUNT;
+
+                                if (info_read_ct < 16)
                                 {
-                                    printf("信息解读完毕, 长度为：%d, 信息为：%s\n", len_of_info, info_buf);
-                                    exit(0);
+                                    len_of_info <<= 1;
+                                    len_of_info |= ac_signal & 0x01;
                                 }
-                                int which = (info_read_ct-16) / 8;
-                                info_buf[which] <<= 1;
-                                info_buf[which] |= ac_signal & 0x01;;
+                                else if (info_read_ct == 16)
+                                {
+                                    printf("len_of_info is %d\n", len_of_info);
+                                    info_buf = new char[len_of_info + 1];
+                                    memset(info_buf, 0, len_of_info + 1);
+                                }
+                                else
+                                {
+                                    if ((info_read_ct - 16) / 8 >= len_of_info)
+                                    {
+                                        printf("信息解读完毕, 长度为：%d, 信息为：%s\n", len_of_info, info_buf);
+                                        exit(0);
+                                    }
+                                    int which = (info_read_ct - 16) / 8;
+                                    info_buf[which] <<= 1;
+                                    info_buf[which] |= ac_signal & 0x01;
+                                    ;
+                                }
+
+                                info_read_ct++;
                             }
-                            info_read_ct++;
                         }
                     }
                 }

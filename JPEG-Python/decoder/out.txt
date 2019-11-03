@@ -18,6 +18,6 @@ EOI found
 1 00
 1 11
 1 11
-image data length is 190365
-len_of_info is 5
-信息解读完毕, 长度为：5, 信息为：hello
+image data length is 147710
+len_of_info is 0
+信息解读完毕, 长度为：0, 信息为：

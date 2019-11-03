@@ -1,8 +1,11 @@
 from pysrc.jpeg import *
 import os
 import itertools
+import sys
 
 npmidsignlist = []
+SKIP_COUNT = 20
+LEAST_LEN = 1
 
 def showalways(img, title = "Window Name"):
     """
@@ -98,6 +101,7 @@ def huffmanTable2BinaryDataStringFile(outfile):
 
 npsignsList = []
 npsignsList2 = []
+
 def hideInfoInAC(info, midSignsTupleList):
     info_length = len(info)
     infoList = []
@@ -111,31 +115,40 @@ def hideInfoInAC(info, midSignsTupleList):
     global npsignsList, npsignsList2
     npsignsList = np.array(signsList)
 
+    skip_count = SKIP_COUNT
+
     for iter_list in range(len(signsList)):
         for iter_signs in range(1, len(signsList[iter_list])):
             if signsList[iter_list][iter_signs][1] != 0\
-                and signsList[iter_list][iter_signs][1] != 1:
-                # and len(bin(abs(signsList[iter_list][iter_signs][1])))-2 > 5:
+                and signsList[iter_list][iter_signs][1] != 1\
+                and len(bin(abs(signsList[iter_list][iter_signs][1])))-2 >= LEAST_LEN:
 
-                zero_len = signsList[iter_list][iter_signs][0]
-                val = signsList[iter_list][iter_signs][1]
+                if skip_count != 0:
+                    skip_count -= 1
 
-                if infoList[0] & 0x01 == 0:
-                    val &= 0b1111_1110
                 else:
-                    val |= 0b0000_0001
-                signsList[iter_list][iter_signs] = (zero_len, val)
+                    skip_count = SKIP_COUNT
 
-                # print("hide info ", val)
+                    zero_len = signsList[iter_list][iter_signs][0]
+                    val = signsList[iter_list][iter_signs][1]
 
-                infoList = infoList[1:]
-                if len(infoList) == 0:
-                    print("信息隐藏完毕")
-                    npsignsList2 = np.array(signsList)
-                    return [(signsList[i*3], signsList[i*3+1], signsList[i*3+2])\
-                            for i in range(len(signsList)//3)]
+                    if infoList[0] & 0x01 == 0:
+                        val &= 0b1111_1110
+                    else:
+                        val |= 0b0000_0001
+                    signsList[iter_list][iter_signs] = (zero_len, val)
+
+                    # print("hide info ", val)
+
+                    infoList = infoList[1:]
+                    if len(infoList) == 0:
+                        print("信息隐藏完毕")
+                        npsignsList2 = np.array(signsList)
+                        return [(signsList[i*3], signsList[i*3+1], signsList[i*3+2])\
+                                for i in range(len(signsList)//3)]
 
     print("信息隐藏未完成")
+    sys.exit(-1)
 
 
 
@@ -200,7 +213,7 @@ def main():
     jpeg_data_bin = "files/jpeg-data.bin"
     jpeg_data_slash_bin = "files/jpeg-data-slash.bin"
 
-    jpeg_in_file = "Pictures/landscape.jpg"
+    jpeg_in_file = "Pictures/squirrel.jpg"
     jpeg_out_file = "Pictures/lpy-jpeg.jpeg"
 
     # 哈夫曼表转换为0-1文件
@@ -222,5 +235,7 @@ def main():
     # 生成jpeg图像
     print("generating jpeg image...")
     os.system('%s %s %s %s %s %s %s %s' % (lpy_encoder, 'cj', huffman_bin, jpeg_data_slash_bin, jpeg_out_file, width, height, channel))
+
+    print("done!")
 if __name__ == "__main__":
     main()
