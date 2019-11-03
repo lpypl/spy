@@ -7,8 +7,8 @@
 #include "jpeg.h"
 #include "decoder.h"
 
-#define SKIP_COUNT 20
-#define LEAST_LEN 1
+#define SKIP_COUNT 30
+#define LEAST_LEN 0
 
 using namespace std;
 
@@ -331,6 +331,9 @@ void decode_jpeg_data()
 
 int len_of_int_bin(int num)
 {
+    if (num == 0)
+        return 1;
+
     num = abs(num);
     string bin;
     while (num != 0)
@@ -461,26 +464,27 @@ void read_info()
                                 {
                                     len_of_info <<= 1;
                                     len_of_info |= ac_signal & 0x01;
+                                    printf("%d\n", ac_signal);
                                 }
-                                else if (info_read_ct == 16)
+                                else if ((info_read_ct - 16) / 8 >= len_of_info)
                                 {
-                                    printf("len_of_info is %d\n", len_of_info);
-                                    info_buf = new char[len_of_info + 1];
-                                    memset(info_buf, 0, len_of_info + 1);
+                                    printf("信息解读完毕, 长度为：%d, 信息为：%s\n", len_of_info, info_buf);
+                                    exit(0);
                                 }
                                 else
                                 {
-                                    if ((info_read_ct - 16) / 8 >= len_of_info)
+                                    if (info_read_ct == 16)
                                     {
-                                        printf("信息解读完毕, 长度为：%d, 信息为：%s\n", len_of_info, info_buf);
-                                        exit(0);
+                                        printf("len_of_info is %d\n", len_of_info);
+                                        info_buf = new char[len_of_info + 1];
+                                        memset(info_buf, 0, len_of_info + 1);
                                     }
                                     int which = (info_read_ct - 16) / 8;
                                     info_buf[which] <<= 1;
                                     info_buf[which] |= ac_signal & 0x01;
-                                    ;
-                                }
 
+                                    // printf("%d\n", ac_signal);
+                                }
                                 info_read_ct++;
                             }
                         }

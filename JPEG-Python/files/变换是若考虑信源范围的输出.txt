@@ -1,0 +1,64 @@
+creating huffman txt file...
+creating jpeg image data txt file...
+4, 4
+4, 4
+-4, 252
+7, 6
+-4, 252
+5, 4
+-5, 250
+-4, 252
+6, 6
+-5, 250
+5, 4
+-6, 250
+5, 4
+-6, -5
+-4, 252
+8, 9
+-5, 250
+4, 5
+7, 7
+-8, 248
+8, 9
+-10, 246
+5, 4
+-7, 248
+-4, 252
+4, 5
+-5, -5
+5, 4
+4, 4
+8, 9
+-9, 246
+5, 5
+4, 4
+-6, -5
+4, 5
+4, 4
+-9, -9
+6, 7
+6, 6
+6, 6
+11, 10
+-5, -5
+-7, -7
+-6, 250
+7, 7
+-4, -3
+-6, 250
+4, 4
+5, 4
+6, 7
+-10, -9
+4, 4
+5, 5
+4, 5
+-9, -9
+4, 5
+信息隐藏完毕
+creating huffman binary file...
+creating jpeg image data binary file...
+slashing jpeg image data binary file...
+generating jpeg image...
+done!

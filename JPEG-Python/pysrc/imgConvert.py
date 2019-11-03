@@ -4,8 +4,8 @@ import itertools
 import sys
 
 npmidsignlist = []
-SKIP_COUNT = 20
-LEAST_LEN = 1
+SKIP_COUNT = 30
+LEAST_LEN = 0
 
 def showalways(img, title = "Window Name"):
     """
@@ -103,13 +103,14 @@ npsignsList = []
 npsignsList2 = []
 
 def hideInfoInAC(info, midSignsTupleList):
+    info = str.encode(info)
     info_length = len(info)
     infoList = []
     for i in range(16):
         infoList.append((info_length>>(15-i))&0x01)
     for char in info:
         for i in range(8):
-            infoList.append((ord(char)>>(7-i))&0x01)
+            infoList.append((char>>(7-i))&0x01)
 
     signsList = list(itertools.chain(*midSignsTupleList))
     global npsignsList, npsignsList2
@@ -119,9 +120,11 @@ def hideInfoInAC(info, midSignsTupleList):
 
     for iter_list in range(len(signsList)):
         for iter_signs in range(1, len(signsList[iter_list])):
-            if signsList[iter_list][iter_signs][1] != 0\
-                and signsList[iter_list][iter_signs][1] != 1\
-                and len(bin(abs(signsList[iter_list][iter_signs][1])))-2 >= LEAST_LEN:
+
+            zero_len = signsList[iter_list][iter_signs][0]
+            val = signsList[iter_list][iter_signs][1]
+
+            if val != 0 and val != 1 and len(bin(abs(val)))-2 >= LEAST_LEN:
 
                 if skip_count != 0:
                     skip_count -= 1
@@ -129,8 +132,7 @@ def hideInfoInAC(info, midSignsTupleList):
                 else:
                     skip_count = SKIP_COUNT
 
-                    zero_len = signsList[iter_list][iter_signs][0]
-                    val = signsList[iter_list][iter_signs][1]
+                    print(val, end=', ')
 
                     if infoList[0] & 0x01 == 0:
                         val &= 0b1111_1110
@@ -138,7 +140,7 @@ def hideInfoInAC(info, midSignsTupleList):
                         val |= 0b0000_0001
                     signsList[iter_list][iter_signs] = (zero_len, val)
 
-                    # print("hide info ", val)
+                    print(val)
 
                     infoList = infoList[1:]
                     if len(infoList) == 0:
@@ -146,7 +148,6 @@ def hideInfoInAC(info, midSignsTupleList):
                         npsignsList2 = np.array(signsList)
                         return [(signsList[i*3], signsList[i*3+1], signsList[i*3+2])\
                                 for i in range(len(signsList)//3)]
-
     print("信息隐藏未完成")
     sys.exit(-1)
 
