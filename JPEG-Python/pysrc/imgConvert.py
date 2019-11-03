@@ -114,8 +114,8 @@ def hideInfoInAC(info, midSignsTupleList):
     for iter_list in range(len(signsList)):
         for iter_signs in range(1, len(signsList[iter_list])):
             if signsList[iter_list][iter_signs][1] != 0\
-                and signsList[iter_list][iter_signs][1] != 1\
-                and len(str(signsList[iter_list][iter_signs][0])) > 1:
+                and signsList[iter_list][iter_signs][1] != 1:
+                # and len(bin(abs(signsList[iter_list][iter_signs][1])))-2 > 5:
 
                 zero_len = signsList[iter_list][iter_signs][0]
                 val = signsList[iter_list][iter_signs][1]
@@ -130,10 +130,12 @@ def hideInfoInAC(info, midSignsTupleList):
 
                 infoList = infoList[1:]
                 if len(infoList) == 0:
+                    print("信息隐藏完毕")
                     npsignsList2 = np.array(signsList)
                     return [(signsList[i*3], signsList[i*3+1], signsList[i*3+2])\
                             for i in range(len(signsList)//3)]
 
+    print("信息隐藏未完成")
 
 
 
@@ -198,7 +200,7 @@ def main():
     jpeg_data_bin = "files/jpeg-data.bin"
     jpeg_data_slash_bin = "files/jpeg-data-slash.bin"
 
-    jpeg_in_file = "Pictures/squirrel.jpg"
+    jpeg_in_file = "Pictures/landscape.jpg"
     jpeg_out_file = "Pictures/lpy-jpeg.jpeg"
 
     # 哈夫曼表转换为0-1文件

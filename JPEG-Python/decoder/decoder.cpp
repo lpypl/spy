@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <cstring>
 #include "jpeg.h"
 #include "decoder.h"
 
@@ -176,7 +177,7 @@ uint8_t next_bit()
 {
     if (__next_bit_pos == -1)
     {
-        if (__next_bit_item == jpeg_data.size()-1)
+        if (__next_bit_item == jpeg_data.size() - 1)
         {
             printf("end of file binary data....... %ld\n", __next_bit_item);
             throw 1;
@@ -255,7 +256,7 @@ void decode_jpeg_data()
                     for (size_t i = 0; i < len_of_dc_signal - 1; i++)
                     {
                         dc_signal <<= 1;
-                        if(isPositive)
+                        if (isPositive)
                             dc_signal |= next_bit();
                         else
                             dc_signal |= (!next_bit());
@@ -295,14 +296,14 @@ void decode_jpeg_data()
                         ac_signal = 0;
                         isPositive = next_bit() == 1;
                         ac_signal |= 1;
-                        for (size_t i = 0; i < len_of_ac_signal-1; i++)
+                        for (size_t i = 0; i < len_of_ac_signal - 1; i++)
                         {
                             ac_signal <<= 1;
-                            if(isPositive)
+                            if (isPositive)
                                 ac_signal |= next_bit();
                             else
                                 ac_signal |= (!next_bit());
-                            
+
                             // printf("ac not found!!! %ld/%ld\n", ac_zero, len_of_ac_signal);
                         }
                         if (!isPositive)
@@ -316,6 +317,151 @@ void decode_jpeg_data()
             }
             block_ct++;
             printf("\n");
+        }
+        // printf("DC found: bits is %d\n", next_bit());
+    }
+    catch (int error)
+    {
+        printf("decode_jpeg_data finished!\n");
+    }
+}
+
+void read_info()
+{
+    string code;
+    int dc_map_index = 0;
+    int ac_map_index = 0;
+    size_t len_of_dc_signal = 0;
+    size_t len_of_ac_signal = 0;
+    size_t ac_zero = 0;
+    int16_t ac_signal = 0;
+    int16_t dc_signal = 0;
+    bool isPositive;
+
+    uint16_t len_of_info = 0;
+    size_t info_read_ct = 0;
+    char *info_buf = nullptr;
+
+    try
+    {
+        while (true)
+        {
+            //遍历所有channel
+            for (int channel = 1; channel <= channel_total; channel++)
+            {
+                //当前使用的哈夫曼表索引
+                dc_map_index = channel_huffman_info[channel] >> 4;
+                ac_map_index = 2 + (channel_huffman_info[channel] & 0x0F);
+
+                // DC
+                // 先读一位，避免 00
+                code = "";
+                while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
+                {
+                    code += next_bit_string();
+                    // printf("dc not found!!!\n");
+                }
+                len_of_dc_signal = huffman_tables[dc_map_index][code];
+                // printf("code is %s, %02lX\n", code.c_str(), len_of_dc_signal);
+
+                if (len_of_dc_signal == 0)
+                {
+                    dc_signal = 0;
+                }
+                else
+                {
+                    dc_signal = 0;
+                    isPositive = next_bit() == 1;
+                    dc_signal |= 1;
+                    for (size_t i = 0; i < len_of_dc_signal - 1; i++)
+                    {
+                        dc_signal <<= 1;
+                        if (isPositive)
+                            dc_signal |= next_bit();
+                        else
+                            dc_signal |= (!next_bit());
+                    }
+                    if (!isPositive)
+                    {
+                        dc_signal = -dc_signal;
+                    }
+                }
+                // printf("(%d), ", dc_signal);
+                // printf("(%ld, %d), ", len_of_dc_signal, dc_signal);
+
+                //AC
+                while (true)
+                {
+                    code = "";
+                    while (huffman_tables[ac_map_index].find(code) == huffman_tables[ac_map_index].end())
+                    {
+                        code += next_bit_string();
+                    }
+                    ac_zero = huffman_tables[ac_map_index][code] >> 4;
+                    len_of_ac_signal = huffman_tables[ac_map_index][code] & 0x0F;
+
+                    //EOB
+                    if (len_of_ac_signal == 0 && ac_zero == 0)
+                    {
+                        // printf("(EOB), ");
+                        break;
+                    }
+                    else if (len_of_ac_signal == 0 && ac_zero == 15)
+                    {
+                        // printf("(ZRL), ");
+                    }
+                    else
+                    {
+                        ac_signal = 0;
+                        isPositive = next_bit() == 1;
+                        ac_signal |= 1;
+                        for (size_t i = 0; i < len_of_ac_signal - 1; i++)
+                        {
+                            ac_signal <<= 1;
+                            if (isPositive)
+                                ac_signal |= next_bit();
+                            else
+                                ac_signal |= (!next_bit());
+                        }
+                        if (!isPositive)
+                        {
+                            ac_signal = -ac_signal;
+                        }
+                        // printf("(%ld, %d), ", ac_zero, ac_signal);
+
+                        //解析信息
+                        if (ac_signal != 0 && ac_signal != 1)
+                        {
+                            if (info_read_ct < 16)
+                            {
+                                len_of_info <<= 1;
+                                len_of_info |= ac_signal & 0x01;
+                            }
+                            else if(info_read_ct == 16)
+                            {
+                                printf("len_of_info is %d\n", len_of_info);
+                                info_buf = new char[len_of_info+1];
+                                memset(info_buf, 0, len_of_info+1);
+                            }
+                            else
+                            {
+                                if((info_read_ct-16)/8 >= len_of_info)
+                                {
+                                    printf("信息解读完毕, 长度为：%d, 信息为：%s\n", len_of_info, info_buf);
+                                    exit(0);
+                                }
+                                int which = (info_read_ct-16) / 8;
+                                info_buf[which] <<= 1;
+                                info_buf[which] |= ac_signal & 0x01;;
+                            }
+                            info_read_ct++;
+                        }
+                    }
+                }
+                // printf("\t");
+            }
+            block_ct++;
+            // printf("\n");
         }
         // printf("DC found: bits is %d\n", next_bit());
     }
@@ -382,15 +528,17 @@ void read_jpeg(const char *infile)
 
     print_image_data();
     // print_huffman();
-    decode_jpeg_data();
+    // decode_jpeg_data();
     // write_image_data_to_file("../files/c-binary-data.bin");
     // printf("%d\n", jpeg_data[147688]);
     // for (size_t i = 0; i < 147690*8; i++)
     // {
     //     next_bit();
     // }
-    printf("read count is %ld\n", read_ct);
-    printf("block count is %ld\n", block_ct);
+    // printf("read count is %ld\n", read_ct);
+    // printf("block count is %ld\n", block_ct);
+
+    read_info();
 }
 
 void print_huffman()
@@ -427,5 +575,4 @@ void write_image_data_to_file(const char *outfile)
     }
     fclose(outfp);
     printf("image data write to %s\n", outfile);
-    
 }
