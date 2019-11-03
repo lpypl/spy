@@ -186,45 +186,57 @@ uint8_t next_bit()
     return bit;
 }
 
-// void decode_jpeg_data()
-// {
-//     uint16_t code;
-//     int dc_map_index = 0;
-//     int ac_map_index = 0;
-//     size_t len_of_signal = 0;
-//     try
-//     {
-//         while (true)
-//         {
-//             //遍历所有channel
-//             for (int channel = 1; channel <= channel_total; channel++)
-//             {
-//                 //当前使用的哈夫曼表索引
-//                 dc_map_index = channel_huffman_info[channel] >> 4;
-//                 ac_map_index = 2 + (channel_huffman_info[channel] & 0x0F);
+/**
+ * 提供下一位二进制编码
+ */
+string next_bit_string()
+{
+    try 
+    {
+        return to_string(next_bit());
+    }
+    catch(int errornum)
+    {
+        throw errornum;
+    }
+}
 
-//                 // DC
-//                 // 先读一位，避免 00
-//                 code = 0;
-//                 code |= next_bit();
-//                 while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
-//                 {
-//                     code <<= 1;
-//                     code |= next_bit();
-//                 }
-//                 len_of_signal = huffman_tables[dc_map_index][code];
-//                 printf("code is %u, %02X\n", code, huffman_tables[dc_map_index][code]);
-//                 exit(0);
+void decode_jpeg_data()
+{
+    string code;
+    int dc_map_index = 0;
+    int ac_map_index = 0;
+    size_t len_of_signal = 0;
+    try
+    {
+        while (true)
+        {
+            //遍历所有channel
+            for (int channel = 1; channel <= channel_total; channel++)
+            {
+                //当前使用的哈夫曼表索引
+                dc_map_index = channel_huffman_info[channel] >> 4;
+                ac_map_index = 2 + (channel_huffman_info[channel] & 0x0F);
 
-//             }
-//         }
-//         printf("DC found: bits is %d\n", next_bit());
-//     }
-//     catch (int error)
-//     {
-//         printf("decode_jpeg_data finished!\n");
-//     }
-// }
+                // DC
+                // 先读一位，避免 00
+                while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
+                {
+                    code += next_bit_string();
+                }
+                len_of_signal = huffman_tables[dc_map_index][code];
+                printf("code is %s, %02X\n", code.c_str(), huffman_tables[dc_map_index][code]);
+                exit(0);
+
+            }
+        }
+        printf("DC found: bits is %d\n", next_bit());
+    }
+    catch (int error)
+    {
+        printf("decode_jpeg_data finished!\n");
+    }
+}
 
 void read_jpeg(const char *infile)
 {
@@ -282,8 +294,8 @@ void read_jpeg(const char *infile)
     printf("%d %02X\n", 1, channel_huffman_info[3]);
 
     // print_image_data();
-    print_huffman();
-    // decode_jpeg_data();
+    // print_huffman();
+    decode_jpeg_data();
 }
 
 void print_huffman()
