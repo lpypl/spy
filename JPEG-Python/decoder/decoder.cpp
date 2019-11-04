@@ -7,8 +7,8 @@
 #include "jpeg.h"
 #include "decoder.h"
 
-#define SKIP_COUNT 0
-#define LEAST_LEN 0
+#define SKIP_COUNT 50
+#define LEAST_LEN 3
 
 using namespace std;
 

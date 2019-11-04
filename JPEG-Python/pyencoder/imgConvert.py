@@ -4,10 +4,11 @@ import itertools
 import sys
 
 npmidsignlist = []
-SKIP_COUNT = 0
-LEAST_LEN = 0
+SKIP_COUNT = 50
+LEAST_LEN = 3
 
-def showalways(img, title = "Window Name"):
+
+def showalways(img, title="Window Name"):
     """
     显示图片
     :param img: img
@@ -17,6 +18,7 @@ def showalways(img, title = "Window Name"):
     cv2.imshow(title, img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
 
 def testSampleAndDct():
     """
@@ -57,13 +59,14 @@ def testSampleAndDct():
     newrgb = cv2.cvtColor(newycrcb, cv2.COLOR_YCR_CB2RGB)
     showalways(newrgb)
 
+
 def img2jpegBinaryDataStringFile_Gray(outfile):
     rgb = cv2.imread(outfile)
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCR_CB)
 
     # 之前考虑了采样
     # y, cr, cb = ycrcb2sample(ycrcb)
-    yblocks, yh, yw = data2blocks(ycrcb[:,:,0])
+    yblocks, yh, yw = data2blocks(ycrcb[:, :, 0])
     tyblocks = yblocks[:]
     for i in range(len(yblocks)):
         tyblocks[i] = quantifyBlock(yblocks[i], 'L')
@@ -81,18 +84,20 @@ def img2jpegBinaryDataStringFile_Gray(outfile):
 
     binaryData = midSigns2binaryCode(midSignsList, 'L')
 
-    shouldFill = (len(binaryData)+7)//8 * 8 - len(binaryData)
+    shouldFill = (len(binaryData) + 7) // 8 * 8 - len(binaryData)
     print("should fill is", shouldFill)
-    binaryData += '0'*shouldFill
+    binaryData += '0' * shouldFill
 
     # bin str to file
     fout = open("files/jpeg-data-binary-string.txt", 'w')
     fout.write(binaryData)
     fout.close()
 
+
 def huffmanTable2BinaryDataStringFile(outfile):
-    binaryData = huffmanTable2BinaryData(LuminanceDCCoefficientDifferencesTable, ChrominanceDCCoefficientDifferencesTable,
-                            acLuminanceTable, acChrominanceTable)
+    binaryData = huffmanTable2BinaryData(LuminanceDCCoefficientDifferencesTable,
+                                         ChrominanceDCCoefficientDifferencesTable,
+                                         acLuminanceTable, acChrominanceTable)
     # fout = open("files/jpeg-huffman-binary-string.txt", 'w')
     fout = open(outfile, 'w')
     fout.write(binaryData)
@@ -102,15 +107,16 @@ def huffmanTable2BinaryDataStringFile(outfile):
 npsignsList = []
 npsignsList2 = []
 
+
 def hideInfoInAC(info, midSignsTupleList):
     info = str.encode(info)
     info_length = len(info)
     infoList = []
     for i in range(16):
-        infoList.append((info_length>>(15-i))&0x01)
+        infoList.append((info_length >> (15 - i)) & 0x01)
     for char in info:
         for i in range(8):
-            infoList.append((char>>(7-i))&0x01)
+            infoList.append((char >> (7 - i)) & 0x01)
 
     signsList = list(itertools.chain(*midSignsTupleList))
     global npsignsList, npsignsList2
@@ -124,7 +130,7 @@ def hideInfoInAC(info, midSignsTupleList):
             zero_len = signsList[iter_list][iter_signs][0]
             val = signsList[iter_list][iter_signs][1]
 
-            if val != 0 and val != 1 and len(bin(abs(val)))-2 >= LEAST_LEN and val > 0:
+            if val != 0 and val != 1 and val != -1 and len(bin(abs(val))) - 2 >= LEAST_LEN and val > 0:
 
                 if skip_count != 0:
                     skip_count -= 1
@@ -134,26 +140,26 @@ def hideInfoInAC(info, midSignsTupleList):
 
                     print(val, end=', ')
 
-                    # if val > 0:
-                    #
-                    #     if infoList[0] & 0x01 == 0:
-                    #         val &= 0b1111_1110
-                    #     else:
-                    #         val |= 0b0000_0001
-                    #
-                    # if val < 0:
-                    #     strval = bin(val)
-                    #     if infoList[0] & 0x01 == 0:
-                    #         strval = strval[:-1] + '0'
-                    #     else:
-                    #         strval = strval[:-1] + '1'
-                    #
-                    #     val = eval(strval)
+                    if val > 0:
 
-                    if infoList[0] & 0x01 == 0:
-                        val &= 0b1111_1110
-                    else:
-                        val |= 0b0000_0001
+                        if infoList[0] & 0x01 == 0:
+                            val &= 0b1111_1110
+                        else:
+                            val |= 0b0000_0001
+
+                    if val < 0:
+                        valbak = abs(val)
+                        if infoList[0] & 0x01 == 0:
+                            valbak &= 0b1111_1110
+                        else:
+                            valbak |= 0b0000_0001
+
+                        val = -valbak
+
+                    # if infoList[0] & 0x01 == 0:
+                    #     val &= 0b1111_1110
+                    # else:
+                    #     val |= 0b0000_0001
 
                     signsList[iter_list][iter_signs] = (zero_len, val)
 
@@ -163,19 +169,17 @@ def hideInfoInAC(info, midSignsTupleList):
                     if len(infoList) == 0:
                         print("信息隐藏完毕")
                         npsignsList2 = np.array(signsList)
-                        return [(signsList[i*3], signsList[i*3+1], signsList[i*3+2])\
-                                for i in range(len(signsList)//3)]
+                        return [(signsList[i * 3], signsList[i * 3 + 1], signsList[i * 3 + 2]) \
+                                for i in range(len(signsList) // 3)]
     print("信息隐藏未完成")
     sys.exit(-1)
 
 
-
-
-def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info = None):
+def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info=None):
     ycrcb = cv2.cvtColor(cv2.imread(imname), cv2.COLOR_BGR2YCR_CB)
 
     # 提取颜色通道
-    yblocks, yh, yw = data2blocks(ycrcb[:,:,0])
+    yblocks, yh, yw = data2blocks(ycrcb[:, :, 0])
     crblocks, crh, crw = data2blocks(ycrcb[:, :, 1])
     cbblocks, cbh, cbw = data2blocks(ycrcb[:, :, 2])
 
@@ -213,9 +217,9 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info = None):
     binaryData = midSigns2binaryCode_Colorful(midSignsTupleList)
 
     # 填充为整数字节
-    shouldFill = (len(binaryData)+7)//8 * 8 - len(binaryData)
+    shouldFill = (len(binaryData) + 7) // 8 * 8 - len(binaryData)
     # print("should fill is", shouldFill)
-    binaryData += '0'*shouldFill
+    binaryData += '0' * shouldFill
 
     # bin str to file
     fout = open(txtname, 'w')
@@ -223,6 +227,7 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info = None):
     fout.close()
 
     return ycrcb.shape
+
 
 def main():
     lpy_encoder = "../cencoder/lpy_jpeg_encoder"
@@ -253,8 +258,11 @@ def main():
     os.system('%s %s %s %s' % (lpy_encoder, 'slash', jpeg_data_bin, jpeg_data_slash_bin))
     # 生成jpeg图像
     print("generating jpeg image...")
-    os.system('%s %s %s %s %s %s %s %s' % (lpy_encoder, 'cj', huffman_bin, jpeg_data_slash_bin, jpeg_out_file, width, height, channel))
+    os.system('%s %s %s %s %s %s %s %s' % (
+    lpy_encoder, 'cj', huffman_bin, jpeg_data_slash_bin, jpeg_out_file, width, height, channel))
 
     print("done!")
+
+
 if __name__ == "__main__":
     main()
