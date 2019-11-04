@@ -266,6 +266,8 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
     char *info_buf = nullptr;
     int skip_count = SKIP_COUNT;
 
+    int ele_of_block_count = 0;
+
     try
     {
         while (true)
@@ -312,6 +314,9 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                 // printf("(%d), ", dc_signal);
                 // printf("(%ld, %d), ", len_of_dc_signal, dc_signal);
 
+                //元素计数（64个表示读完了）
+                ele_of_block_count++;
+
                 //AC
                 while (true)
                 {
@@ -332,6 +337,8 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                     else if (len_of_ac_signal == 0 && ac_zero == 15)
                     {
                         // printf("(ZRL), ");
+                        //元素计数（64个表示读完了）
+                        ele_of_block_count += 16;
                     }
                     else
                     {
@@ -351,6 +358,9 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                             ac_signal = -ac_signal;
                         }
                         // printf("(%ld, %d), ", ac_zero, ac_signal);
+
+                        //元素计数（64个表示读完了）
+                        ele_of_block_count++;
 
                         //解析信息
                         if (ac_signal != 0 && ac_signal != 1 && len_of_int_bin(ac_signal) >= LEAST_LEN && ac_signal > 0)
