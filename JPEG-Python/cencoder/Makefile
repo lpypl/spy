@@ -1,4 +1,4 @@
-lpy_jpeg_encoder : main.o jpeg.o jpeg-binary-tools.o
+lpy-jpeg-encoder : main.o jpeg.o jpeg-binary-tools.o
 	gcc -o $@ $^
 
 jpeg.o : jpeg.c jpeg.h

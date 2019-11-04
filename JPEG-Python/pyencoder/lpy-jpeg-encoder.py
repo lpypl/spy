@@ -218,7 +218,8 @@ import os.path
 def main():
 
     PREFIX = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))+ "/"
-    lpy_encoder = PREFIX + "cencoder/lpy_jpeg_encoder"
+    DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/"
+    lpy_encoder = DIR_PATH + "lpy-jpeg-encoder"
     jpeg_in_file = "../Pictures/squirrel.jpg"
     jpeg_out_file = "../Pictures/lpy-jpeg.jpeg"
     info = None

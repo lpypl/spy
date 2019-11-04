@@ -431,3 +431,14 @@ def huffmanTable2BinaryData(dcl, dcc, acl, acc):
     binaryData = int2ByteBinary(0xFF) + int2ByteBinary(0xC4) + int2DoubleByteBinary(len(binaryData)//8 + 2) + binaryData
 
     return binaryData
+
+
+def zigzigTable2CArray(table):
+    """
+    对table进行之字形编码，以C++数组形式输出
+    """
+    lt =  zigzagOrder(table)
+    for i in range(len(lt)):
+        if i % 8 == 0:
+            print("\n")
+        print(hex(lt[i]), end = ', ')
