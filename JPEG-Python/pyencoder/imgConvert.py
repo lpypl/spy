@@ -1,7 +1,8 @@
-from pyencoder.jpeg import *
+from jpeg import *
 import os
 import itertools
 import sys
+from tempfile import TemporaryDirectory
 
 npmidsignlist = []
 SKIP_COUNT = 50
@@ -138,39 +139,40 @@ def hideInfoInAC(info, midSignsTupleList):
                 else:
                     skip_count = SKIP_COUNT
 
-                    print(val, end=', ')
+                    # print(val, end=', ')
 
-                    if val > 0:
+                    # if val > 0:
 
-                        if infoList[0] & 0x01 == 0:
-                            val &= 0b1111_1110
-                        else:
-                            val |= 0b0000_0001
+                    if infoList[0] & 0x01 == 0:
+                        val &= 0b1111_1110
+                    else:
+                        val |= 0b0000_0001
 
-                    if val < 0:
-                        valbak = abs(val)
-                        if infoList[0] & 0x01 == 0:
-                            valbak &= 0b1111_1110
-                        else:
-                            valbak |= 0b0000_0001
+                # if val < 0:
+                #     valbak = abs(val)
+                #     if infoList[0] & 0x01 == 0:
+                #         valbak &= 0b1111_1110
+                #     else:
+                #         valbak |= 0b0000_0001
+                #
+                #     val = -valbak
 
-                        val = -valbak
+                # if infoList[0] & 0x01 == 0:
+                #     val &= 0b1111_1110
+                # else:
+                #     val |= 0b0000_0001
 
-                    # if infoList[0] & 0x01 == 0:
-                    #     val &= 0b1111_1110
-                    # else:
-                    #     val |= 0b0000_0001
+                signsList[iter_list][iter_signs] = (zero_len, val)
 
-                    signsList[iter_list][iter_signs] = (zero_len, val)
+                # print(val)
 
-                    print(val)
+                infoList = infoList[1:]
+                if len(infoList) == 0:
+                    print("信息隐藏完毕")
+                    npsignsList2 = np.array(signsList)
+                    return [(signsList[i * 3], signsList[i * 3 + 1], signsList[i * 3 + 2]) \
+                            for i in range(len(signsList) // 3)]
 
-                    infoList = infoList[1:]
-                    if len(infoList) == 0:
-                        print("信息隐藏完毕")
-                        npsignsList2 = np.array(signsList)
-                        return [(signsList[i * 3], signsList[i * 3 + 1], signsList[i * 3 + 2]) \
-                                for i in range(len(signsList) // 3)]
     print("信息隐藏未完成")
     sys.exit(-1)
 
@@ -229,39 +231,63 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info=None):
     return ycrcb.shape
 
 
+import sys
+import os.path
+
 def main():
-    lpy_encoder = "../cencoder/lpy_jpeg_encoder"
-    huffman_txt = "../files/huffman.txt"
-    huffman_bin = "../files/huffman.bin"
-    jpeg_data_txt = "../files/jpeg-data.txt"
-    jpeg_data_bin = "../files/jpeg-data.bin"
-    jpeg_data_slash_bin = "../files/jpeg-data-slash.bin"
 
-    jpeg_in_file = "../Pictures/squirrel.jpg"
-    jpeg_out_file = "../Pictures/lpy-jpeg.jpeg"
+    PREFIX = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))+ "/"
 
-    # 哈夫曼表转换为0-1文件
-    print("creating huffman txt file...")
-    huffmanTable2BinaryDataStringFile(huffman_txt)
-    # 图片数据转换为0-1文件
-    print("creating jpeg image data txt file...")
-    height, width, channel = img2jpegBinaryDataStringFile_Colorful(jpeg_in_file, jpeg_data_txt, "hello")
+    lpy_encoder = PREFIX + "cencoder/lpy_jpeg_encoder"
+    jpeg_in_file = "Pictures/squirrel.jpg"
+    jpeg_out_file = "Pictures/lpy-jpeg.jpeg"
+    info = None
 
-    # 哈夫曼0-1文件转换为二进制文件
-    print("creating huffman binary file...")
-    os.system('%s %s %s %s' % (lpy_encoder, 't2b', huffman_txt, huffman_bin))
-    # jpeg 0-1文件转换为二进制文件
-    print("creating jpeg image data binary file...")
-    os.system('%s %s %s %s' % (lpy_encoder, 't2b', jpeg_data_txt, jpeg_data_bin))
-    # 对jpeg 二进制文件进行转义(0xFF后添加0x00)
-    print("slashing jpeg image data binary file...")
-    os.system('%s %s %s %s' % (lpy_encoder, 'slash', jpeg_data_bin, jpeg_data_slash_bin))
-    # 生成jpeg图像
-    print("generating jpeg image...")
-    os.system('%s %s %s %s %s %s %s %s' % (
-    lpy_encoder, 'cj', huffman_bin, jpeg_data_slash_bin, jpeg_out_file, width, height, channel))
+    args = sys.argv[1:]
 
-    print("done!")
+    if len(args) not in (2, 3):
+        print("Usage: %s infile outfile [info]" % sys.argv[0])
+        sys.exit(-1)
+    elif len(args) == 2:
+        jpeg_in_file = args[0]
+        jpeg_out_file = args[1]
+    elif len(args) == 3:
+        jpeg_in_file = args[0]
+        jpeg_out_file = args[1]
+        info = args[2]
+
+
+    with TemporaryDirectory() as TMPDIR:
+
+        
+        huffman_txt =    TMPDIR + "huffman.txt"
+        huffman_bin =    TMPDIR + "huffman.bin"
+        jpeg_data_txt =    TMPDIR + "jpeg-data.txt"
+        jpeg_data_bin =    TMPDIR + "jpeg-data.bin"
+        jpeg_data_slash_bin =    TMPDIR + "jpeg-data-slash.bin"
+
+        # 哈夫曼表转换为0-1文件
+        print("creating huffman txt file...")
+        huffmanTable2BinaryDataStringFile(huffman_txt)
+        # 图片数据转换为0-1文件
+        print("creating jpeg image data txt file...")
+        height, width, channel = img2jpegBinaryDataStringFile_Colorful(jpeg_in_file, jpeg_data_txt, info)
+
+        # 哈夫曼0-1文件转换为二进制文件
+        print("creating huffman binary file...")
+        os.system('%s %s %s %s' % (lpy_encoder, 't2b', huffman_txt, huffman_bin))
+        # jpeg 0-1文件转换为二进制文件
+        print("creating jpeg image data binary file...")
+        os.system('%s %s %s %s' % (lpy_encoder, 't2b', jpeg_data_txt, jpeg_data_bin))
+        # 对jpeg 二进制文件进行转义(0xFF后添加0x00)
+        print("slashing jpeg image data binary file...")
+        os.system('%s %s %s %s' % (lpy_encoder, 'slash', jpeg_data_bin, jpeg_data_slash_bin))
+        # 生成jpeg图像
+        print("generating jpeg image...")
+        os.system('%s %s %s %s %s %s %s %s' % (
+            lpy_encoder, 'cj', huffman_bin, jpeg_data_slash_bin, jpeg_out_file, width, height, channel))
+
+        print("done!")
 
 
 if __name__ == "__main__":

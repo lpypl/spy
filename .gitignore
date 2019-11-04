@@ -2,3 +2,4 @@ JPEG-Python/decoder/*.o
 JPEG-Python/files/
 JPEG-Python/cencoder/*.o
 JPEG-Python/pyencoder/__pycache__
+JPEG-Python/Pictures/

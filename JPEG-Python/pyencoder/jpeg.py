@@ -2,7 +2,7 @@ import copy
 import cv2
 import math
 
-from pyencoder.jpegTable import *
+from jpegTable import *
 
 # 4:2:2
 def ycrcb2sample(ycrcb):
