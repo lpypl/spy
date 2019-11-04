@@ -4,7 +4,7 @@ import itertools
 import sys
 
 npmidsignlist = []
-SKIP_COUNT = 500
+SKIP_COUNT = 0
 LEAST_LEN = 0
 
 def showalways(img, title = "Window Name"):
@@ -124,7 +124,7 @@ def hideInfoInAC(info, midSignsTupleList):
             zero_len = signsList[iter_list][iter_signs][0]
             val = signsList[iter_list][iter_signs][1]
 
-            if val != 0 and val != 1 and len(bin(abs(val)))-2 >= LEAST_LEN:
+            if val != 0 and val != 1 and len(bin(abs(val)))-2 >= LEAST_LEN and val > 0:
 
                 if skip_count != 0:
                     skip_count -= 1
@@ -132,15 +132,32 @@ def hideInfoInAC(info, midSignsTupleList):
                 else:
                     skip_count = SKIP_COUNT
 
-                    # print(val, end=', ')
+                    print(val, end=', ')
+
+                    # if val > 0:
+                    #
+                    #     if infoList[0] & 0x01 == 0:
+                    #         val &= 0b1111_1110
+                    #     else:
+                    #         val |= 0b0000_0001
+                    #
+                    # if val < 0:
+                    #     strval = bin(val)
+                    #     if infoList[0] & 0x01 == 0:
+                    #         strval = strval[:-1] + '0'
+                    #     else:
+                    #         strval = strval[:-1] + '1'
+                    #
+                    #     val = eval(strval)
 
                     if infoList[0] & 0x01 == 0:
                         val &= 0b1111_1110
                     else:
                         val |= 0b0000_0001
+
                     signsList[iter_list][iter_signs] = (zero_len, val)
 
-                    # print(val)
+                    print(val)
 
                     infoList = infoList[1:]
                     if len(infoList) == 0:
@@ -223,7 +240,7 @@ def main():
     huffmanTable2BinaryDataStringFile(huffman_txt)
     # 图片数据转换为0-1文件
     print("creating jpeg image data txt file...")
-    height, width, channel = img2jpegBinaryDataStringFile_Colorful(jpeg_in_file, jpeg_data_txt, "H")
+    height, width, channel = img2jpegBinaryDataStringFile_Colorful(jpeg_in_file, jpeg_data_txt, "hello")
 
     # 哈夫曼0-1文件转换为二进制文件
     print("creating huffman binary file...")

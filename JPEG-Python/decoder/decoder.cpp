@@ -7,7 +7,7 @@
 #include "jpeg.h"
 #include "decoder.h"
 
-#define SKIP_COUNT 500
+#define SKIP_COUNT 0
 #define LEAST_LEN 0
 
 using namespace std;
@@ -449,7 +449,7 @@ void read_info()
                         // printf("(%ld, %d), ", ac_zero, ac_signal);
 
                         //解析信息
-                        if (ac_signal != 0 && ac_signal != 1 && len_of_int_bin(ac_signal) >= LEAST_LEN)
+                        if (ac_signal != 0 && ac_signal != 1 && len_of_int_bin(ac_signal) >= LEAST_LEN && ac_signal > 0)
                         {
 
                             if (skip_count != 0)
