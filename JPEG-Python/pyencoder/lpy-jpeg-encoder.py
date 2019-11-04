@@ -136,7 +136,7 @@ def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
                 else:
                     skip_count = SKIP_COUNT
 
-                    print(val, end=', ')
+                    # print(val, end=', ')
 
                     if infoList[0] & 0x01 == 0:
                         val &= 0b1111_1110
@@ -145,7 +145,7 @@ def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
 
                     signsList[iter_list][iter_signs] = (zero_len, val)
 
-                    print(val)
+                    # print(val)
 
                     infoList = infoList[1:]
                     if len(infoList) == 0:
@@ -191,6 +191,7 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info, SKIP_COUNT, LEA
                                   zigzag2midSigns(crdiffZigList[i])))
 
     if info != None:
+        print("hiding infomation...")
         midSignsTupleList = hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN)
 
     global npmidsignlist
