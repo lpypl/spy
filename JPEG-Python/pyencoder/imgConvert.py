@@ -1,10 +1,10 @@
-from pysrc.jpeg import *
+from pyencoder.jpeg import *
 import os
 import itertools
 import sys
 
 npmidsignlist = []
-SKIP_COUNT = 30
+SKIP_COUNT = 0
 LEAST_LEN = 0
 
 def showalways(img, title = "Window Name"):
@@ -132,7 +132,7 @@ def hideInfoInAC(info, midSignsTupleList):
                 else:
                     skip_count = SKIP_COUNT
 
-                    print(val, end=', ')
+                    # print(val, end=', ')
 
                     if infoList[0] & 0x01 == 0:
                         val &= 0b1111_1110
@@ -140,7 +140,7 @@ def hideInfoInAC(info, midSignsTupleList):
                         val |= 0b0000_0001
                     signsList[iter_list][iter_signs] = (zero_len, val)
 
-                    print(val)
+                    # print(val)
 
                     infoList = infoList[1:]
                     if len(infoList) == 0:
@@ -186,7 +186,7 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname):
                                   zigzag2midSigns(cbdiffZigList[i]),
                                   zigzag2midSigns(crdiffZigList[i])))
 
-    midSignsTupleList = hideInfoInAC("hello", midSignsTupleList)
+    # midSignsTupleList = hideInfoInAC("社会主义接班人", midSignsTupleList)
 
     global npmidsignlist
     npmidsignlist = np.array(midSignsTupleList)
@@ -207,15 +207,15 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname):
     return ycrcb.shape
 
 def main():
-    lpy_encoder = "csrc/lpy_jpeg_encoder"
-    huffman_txt = "files/huffman.txt"
-    huffman_bin = "files/huffman.bin"
-    jpeg_data_txt = "files/jpeg-data.txt"
-    jpeg_data_bin = "files/jpeg-data.bin"
-    jpeg_data_slash_bin = "files/jpeg-data-slash.bin"
+    lpy_encoder = "../cencoder/lpy_jpeg_encoder"
+    huffman_txt = "../files/huffman.txt"
+    huffman_bin = "../files/huffman.bin"
+    jpeg_data_txt = "../files/jpeg-data.txt"
+    jpeg_data_bin = "../files/jpeg-data.bin"
+    jpeg_data_slash_bin = "../files/jpeg-data-slash.bin"
 
-    jpeg_in_file = "Pictures/squirrel.jpg"
-    jpeg_out_file = "Pictures/lpy-jpeg.jpeg"
+    jpeg_in_file = "../Pictures/Koala.bmp"
+    jpeg_out_file = "../Pictures/lpy-jpeg.jpeg"
 
     # 哈夫曼表转换为0-1文件
     print("creating huffman txt file...")

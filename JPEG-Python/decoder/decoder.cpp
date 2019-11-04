@@ -7,7 +7,7 @@
 #include "jpeg.h"
 #include "decoder.h"
 
-#define SKIP_COUNT 30
+#define SKIP_COUNT 200
 #define LEAST_LEN 0
 
 using namespace std;
@@ -464,7 +464,7 @@ void read_info()
                                 {
                                     len_of_info <<= 1;
                                     len_of_info |= ac_signal & 0x01;
-                                    printf("%d\n", ac_signal);
+                                    // printf("%d\n", ac_signal);
                                 }
                                 else if ((info_read_ct - 16) / 8 >= len_of_info)
                                 {
