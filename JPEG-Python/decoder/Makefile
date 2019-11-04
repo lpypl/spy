@@ -1,4 +1,4 @@
-lpy-jpeg-decoder : decoder.o main.o
+lpy-jpeg-decoder : decoder.o main.o util.o
 	g++ -o $@ $^
 
 decoder.o : decoder.cpp jpeg.h
@@ -7,5 +7,8 @@ decoder.o : decoder.cpp jpeg.h
 main.o : main.cpp decoder.h
 	g++ -c $<
 
+util.o : util.cpp util.h
+	g++ -c $<
+
 clean:
-	rm decoder.o lpy-jpeg-decoder main.o
+	rm decoder.o lpy-jpeg-decoder main.o util.o

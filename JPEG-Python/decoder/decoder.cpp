@@ -4,8 +4,10 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <cstdlib>
 #include "jpeg.h"
 #include "decoder.h"
+#include "util.h"
 
 using namespace std;
 
@@ -13,8 +15,11 @@ using namespace std;
 vector<map<string, uint8_t>> huffman_tables(4, map<string, uint8_t>());
 //记录颜色通道对应的哈夫曼表（ 使用1，2，3 ）
 uint8_t channel_huffman_info[4] = {0};
+//记录颜色成分总数
 int channel_total = 0;
-//
+
+//jpeg 图像数据, 暂存此处，以待解析
+//并且 next_bit 借此结构实现了下一位代码生成器
 vector<uint8_t> jpeg_data;
 
 //二进制码提供器控制变量
@@ -22,23 +27,55 @@ vector<uint8_t> jpeg_data;
 size_t __next_bit_item = 0;
 //哪一位uint8_t
 int __next_bit_pos = 7;
-vector<uint8_t>::const_iterator __next_bit_iter;
-bool __next_bit_initial = false;
+
+//读取计数，用于解析隐藏信息
 long read_ct = 0;
-long block_ct = 0;
 
 /**
- * 按大端序读取 uint16_t
+ * 提供下一位二进制编码
  */
-uint16_t read_uint16_bigend(FILE *foutp)
+uint8_t next_bit()
 {
-    uint16_t data = 0;
-    data |= getc(foutp) << 8;
-    data |= getc(foutp);
+    if (__next_bit_pos == -1)
+    {
+        if (__next_bit_item == jpeg_data.size() - 1)
+        {
+            // printf("end of file binary data....... %ld\n", __next_bit_item);
+            throw 1;
+        }
+        else
+        {
+            // printf("%ld\n", __next_bit_item);
+            __next_bit_item += 1;
+            __next_bit_pos = 7;
+        }
+    }
 
-    return data;
+    uint8_t bit = (jpeg_data[__next_bit_item] >> __next_bit_pos) & 0x1;
+    __next_bit_pos--;
+    return bit;
 }
 
+/**
+ * 提供下一位二进制编码
+ */
+string next_bit_string()
+{
+    try
+    {
+        return to_string(next_bit());
+    }
+    catch (int errornum)
+    {
+        throw errornum;
+    }
+}
+
+
+/**
+ * 跳过某一段segment
+ * 读取到某个标记之后，可用此方法跳过这一段
+ */ 
 void skip_segment(FILE *infp)
 {
     uint8_t len = read_uint16_bigend(infp);
@@ -46,22 +83,9 @@ void skip_segment(FILE *infp)
     fseek(infp, len, SEEK_CUR);
 }
 
-string generate_code_string(int num, int len)
-{
-    string arr(len, '0');
-    int cur = len - 1;
-    while (num && cur >= 0)
-    {
-        if (num & 0x1)
-            arr[cur--] = '1';
-        else
-            arr[cur--] = '0';
-        num >>= 1;
-    }
-
-    return arr;
-}
-
+/**
+ * 读取哈夫曼表，存到 huffman_tables
+ */ 
 void read_huffman(FILE *infp)
 {
     uint8_t len = read_uint16_bigend(infp);
@@ -116,6 +140,28 @@ void read_huffman(FILE *infp)
     }
 }
 
+/**
+ * 打印哈夫曼表(DEBUG)
+ */ 
+void print_huffman()
+{
+    // print huffman
+    for (int type = 0; type < 2; type++)
+    {
+        for (int id = 0; id < 2; id++)
+        {
+            printf("type: %d id:%d\n", type, id);
+            for (auto item : huffman_tables[type * 2 + id])
+            {
+                printf("%s\t %02X\n", item.first.c_str(), item.second);
+            }
+        }
+    }
+}
+
+/**
+ * 读取SOS，在此函数中也会执行图像数据的读取（read_jpeg_data）
+ */ 
 void read_sos(FILE *infp)
 {
     //length
@@ -137,6 +183,9 @@ void read_sos(FILE *infp)
     read_jpeg_data(infp);
 }
 
+/**
+ * 读取图像数据，存储在 jpeg_data
+ */ 
 void read_jpeg_data(FILE *infp)
 {
     printf("Reading jpeg image data...\n");
@@ -171,176 +220,35 @@ error_or_eof:
 }
 
 /**
- * 提供下一位二进制编码
- */
-uint8_t next_bit()
+ * 将jpeg-data写入文件(DEBUG)
+ */ 
+void write_image_data_to_file(const char *outfile)
 {
-    if (__next_bit_pos == -1)
+    FILE *outfp = fopen(outfile, "w");
+    for (size_t i = 0; i < jpeg_data.size(); i++)
     {
-        if (__next_bit_item == jpeg_data.size() - 1)
-        {
-            // printf("end of file binary data....... %ld\n", __next_bit_item);
-            throw 1;
-        }
-        else
-        {
-            // printf("%ld\n", __next_bit_item);
-            __next_bit_item += 1;
-            __next_bit_pos = 7;
-        }
+        putc(jpeg_data[i], outfp);
     }
-
-    uint8_t bit = (jpeg_data[__next_bit_item] >> __next_bit_pos) & 0x1;
-    __next_bit_pos--;
-    return bit;
+    fclose(outfp);
+    printf("image data write to %s\n", outfile);
 }
 
 /**
- * 提供下一位二进制编码
- */
-string next_bit_string()
+ * 打印图像数据(DUBUG)
+ */ 
+void print_image_data()
 {
-    try
+    printf("image data length is %lu\n", jpeg_data.size());
+    for (auto b = jpeg_data.begin(); b != jpeg_data.end(); b++)
     {
-        return to_string(next_bit());
-    }
-    catch (int errornum)
-    {
-        throw errornum;
+        printf("%02X ", *b);
     }
 }
 
-void decode_jpeg_data()
-{
-    string code;
-    int dc_map_index = 0;
-    int ac_map_index = 0;
-    size_t len_of_dc_signal = 0;
-    size_t len_of_ac_signal = 0;
-    size_t ac_zero = 0;
-    int16_t ac_signal = 0;
-    int16_t dc_signal = 0;
-    bool isPositive;
 
-    try
-    {
-        while (true)
-        {
-            //遍历所有channel
-            for (int channel = 1; channel <= channel_total; channel++)
-            {
-                //当前使用的哈夫曼表索引
-                dc_map_index = channel_huffman_info[channel] >> 4;
-                ac_map_index = 2 + (channel_huffman_info[channel] & 0x0F);
-
-                // DC
-                // 先读一位，避免 00
-                code = "";
-                while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
-                {
-                    code += next_bit_string();
-                    // printf("dc not found!!!\n");
-                }
-                len_of_dc_signal = huffman_tables[dc_map_index][code];
-                // printf("code is %s, %02lX\n", code.c_str(), len_of_dc_signal);
-
-                if (len_of_dc_signal == 0)
-                {
-                    dc_signal = 0;
-                }
-                else
-                {
-                    dc_signal = 0;
-                    isPositive = next_bit() == 1;
-                    dc_signal |= 1;
-                    for (size_t i = 0; i < len_of_dc_signal - 1; i++)
-                    {
-                        dc_signal <<= 1;
-                        if (isPositive)
-                            dc_signal |= next_bit();
-                        else
-                            dc_signal |= (!next_bit());
-                    }
-                    if (!isPositive)
-                    {
-                        dc_signal = -dc_signal;
-                    }
-                }
-                printf("(%d), ", dc_signal);
-                // printf("(%ld, %d), ", len_of_dc_signal, dc_signal);
-
-                //AC
-                while (true)
-                {
-                    code = "";
-                    while (huffman_tables[ac_map_index].find(code) == huffman_tables[ac_map_index].end())
-                    {
-                        code += next_bit_string();
-                        // printf("ac not found!!!\n");
-                    }
-                    ac_zero = huffman_tables[ac_map_index][code] >> 4;
-                    len_of_ac_signal = huffman_tables[ac_map_index][code] & 0x0F;
-
-                    //EOB
-                    if (len_of_ac_signal == 0 && ac_zero == 0)
-                    {
-                        printf("(EOB), ");
-                        break;
-                    }
-                    else if (len_of_ac_signal == 0 && ac_zero == 15)
-                    {
-                        printf("(ZRL), ");
-                    }
-                    else
-                    {
-                        ac_signal = 0;
-                        isPositive = next_bit() == 1;
-                        ac_signal |= 1;
-                        for (size_t i = 0; i < len_of_ac_signal - 1; i++)
-                        {
-                            ac_signal <<= 1;
-                            if (isPositive)
-                                ac_signal |= next_bit();
-                            else
-                                ac_signal |= (!next_bit());
-
-                            // printf("ac not found!!! %ld/%ld\n", ac_zero, len_of_ac_signal);
-                        }
-                        if (!isPositive)
-                        {
-                            ac_signal = -ac_signal;
-                        }
-                        printf("(%ld, %d), ", ac_zero, ac_signal);
-                    }
-                }
-                printf("\t");
-            }
-            block_ct++;
-            printf("\n");
-        }
-        // printf("DC found: bits is %d\n", next_bit());
-    }
-    catch (int error)
-    {
-        // printf("decode_jpeg_data finished!\n");
-    }
-}
-
-int len_of_int_bin(int num)
-{
-    if (num == 0)
-        return 1;
-
-    num = abs(num);
-    string bin;
-    while (num != 0)
-    {
-        bin.push_back((num % 2) + 0x30);
-        num /= 2;
-    }
-    return bin.size();
-}
-
+/**
+ * 读取隐藏信息
+ */ 
 void read_info(int SKIP_COUNT, int LEAST_LEN)
 {
     string code;
@@ -370,7 +278,6 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                 ac_map_index = 2 + (channel_huffman_info[channel] & 0x0F);
 
                 // DC
-                // 先读一位，避免 00
                 code = "";
                 while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
                 {
@@ -472,7 +379,7 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                                 {
                                     if (info_read_ct == 16)
                                     {
-                                        printf("len_of_info is %d\n", len_of_info);
+                                        // printf("len_of_info is %d\n", len_of_info);
                                         info_buf = new char[len_of_info + 1];
                                         memset(info_buf, 0, len_of_info + 1);
                                     }
@@ -489,7 +396,6 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                 }
                 // printf("\t");
             }
-            block_ct++;
             // printf("\n");
         }
         // printf("DC found: bits is %d\n", next_bit());
@@ -503,6 +409,13 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
 void read_jpeg(const char *infile, int skip_count, int least_len)
 {
     FILE *infp = fopen(infile, "rb");
+
+    if(infp == NULL)
+    {
+        perror("Fail: ");
+        exit(-1);
+    }
+
     int ch;
 
     while ((ch = getc(infp)) != -1)
@@ -570,38 +483,4 @@ void read_jpeg(const char *infile, int skip_count, int least_len)
     read_info(skip_count, least_len);
 }
 
-void print_huffman()
-{
-    // print huffman
-    for (int type = 0; type < 2; type++)
-    {
-        for (int id = 0; id < 2; id++)
-        {
-            printf("type: %d id:%d\n", type, id);
-            for (auto item : huffman_tables[type * 2 + id])
-            {
-                printf("%s\t %02X\n", item.first.c_str(), item.second);
-            }
-        }
-    }
-}
 
-void print_image_data()
-{
-    printf("image data length is %lu\n", jpeg_data.size());
-    // for (auto b = jpeg_data.begin(); b != jpeg_data.end(); b++)
-    // {
-    //     printf("%02X ", *b);
-    // }
-}
-
-void write_image_data_to_file(const char *outfile)
-{
-    FILE *outfp = fopen(outfile, "w");
-    for (size_t i = 0; i < jpeg_data.size(); i++)
-    {
-        putc(jpeg_data[i], outfp);
-    }
-    fclose(outfp);
-    printf("image data write to %s\n", outfile);
-}
