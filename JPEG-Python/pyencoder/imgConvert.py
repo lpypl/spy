@@ -4,7 +4,7 @@ import itertools
 import sys
 
 npmidsignlist = []
-SKIP_COUNT = 0
+SKIP_COUNT = 500
 LEAST_LEN = 0
 
 def showalways(img, title = "Window Name"):
@@ -154,7 +154,7 @@ def hideInfoInAC(info, midSignsTupleList):
 
 
 
-def img2jpegBinaryDataStringFile_Colorful(imname, txtname):
+def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info = None):
     ycrcb = cv2.cvtColor(cv2.imread(imname), cv2.COLOR_BGR2YCR_CB)
 
     # 提取颜色通道
@@ -186,7 +186,8 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname):
                                   zigzag2midSigns(cbdiffZigList[i]),
                                   zigzag2midSigns(crdiffZigList[i])))
 
-    # midSignsTupleList = hideInfoInAC("社会主义接班人", midSignsTupleList)
+    if info != None:
+        midSignsTupleList = hideInfoInAC(info, midSignsTupleList)
 
     global npmidsignlist
     npmidsignlist = np.array(midSignsTupleList)
@@ -214,7 +215,7 @@ def main():
     jpeg_data_bin = "../files/jpeg-data.bin"
     jpeg_data_slash_bin = "../files/jpeg-data-slash.bin"
 
-    jpeg_in_file = "../Pictures/Koala.bmp"
+    jpeg_in_file = "../Pictures/squirrel.jpg"
     jpeg_out_file = "../Pictures/lpy-jpeg.jpeg"
 
     # 哈夫曼表转换为0-1文件
@@ -222,7 +223,7 @@ def main():
     huffmanTable2BinaryDataStringFile(huffman_txt)
     # 图片数据转换为0-1文件
     print("creating jpeg image data txt file...")
-    height, width, channel = img2jpegBinaryDataStringFile_Colorful(jpeg_in_file, jpeg_data_txt)
+    height, width, channel = img2jpegBinaryDataStringFile_Colorful(jpeg_in_file, jpeg_data_txt, "H")
 
     # 哈夫曼0-1文件转换为二进制文件
     print("creating huffman binary file...")
