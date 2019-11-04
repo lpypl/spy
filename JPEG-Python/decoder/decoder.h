@@ -6,9 +6,8 @@
 #include <string>
 
 extern std::vector<std::map<std::string, uint8_t>> huffman_tables;
-void read_jpeg(const char *infile);
+void read_jpeg(const char *infile, int skip_count, int least_len);
 void print_huffman();
-void read_jpeg(const char *infile);
 void read_jpeg_data(FILE *infp);
 void read_sos(FILE *infp);
 void read_huffman(FILE *infp);

@@ -343,6 +343,8 @@ int len_of_int_bin(int num)
 
 void read_info(int SKIP_COUNT, int LEAST_LEN)
 {
+    SKIP_COUNT = 0;
+    LEAST_LEN = 0;
     string code;
     int dc_map_index = 0;
     int ac_map_index = 0;
