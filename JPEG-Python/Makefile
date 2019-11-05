@@ -1,5 +1,4 @@
 all:
-	echo $(PLATFORM)
 	+$(MAKE) -C cencoder
 	+$(MAKE) -C decoder
 

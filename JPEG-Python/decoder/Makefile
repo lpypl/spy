@@ -1,7 +1,7 @@
 ifeq ($(OS),Windows_NT)
-	TARGET = lpy-jpeg-dncoder.exe
+	TARGET = lpy-jpeg-decoder.exe
 else
-	TARGET = lpy-jpeg-dncoder
+	TARGET = lpy-jpeg-decoder
 endif
 
 $(TARGET) : decoder.o main.o util.o

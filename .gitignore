@@ -4,5 +4,6 @@ JPEG-Python/cencoder/*.o
 JPEG-Python/pyencoder/__pycache__
 JPEG-Python/Pictures/
 JPEG-Python/decoder/lpy-jpeg-decoder
-JPEG-Python/cencoder/lpy_jpeg_encoder
+JPEG-Python/cencoder/lpy-jpeg-encoder
 JPEG-Python/bin/
+
