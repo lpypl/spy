@@ -1,4 +1,10 @@
-lpy-jpeg-encoder : main.o jpeg.o jpeg-binary-tools.o
+ifeq ($(OS),Windows_NT)
+	TARGET = lpy-jpeg-encoder.exe
+else
+	TARGET = lpy-jpeg-encoder
+endif
+
+$(TARGET) : main.o jpeg.o jpeg-binary-tools.o
 	gcc -o $@ $^
 
 jpeg.o : jpeg.c jpeg.h

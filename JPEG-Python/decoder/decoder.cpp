@@ -224,7 +224,7 @@ error_or_eof:
  */ 
 void write_image_data_to_file(const char *outfile)
 {
-    FILE *outfp = fopen(outfile, "w");
+    FILE *outfp = fopen(outfile, "wb");
     for (size_t i = 0; i < jpeg_data.size(); i++)
     {
         putc(jpeg_data[i], outfp);

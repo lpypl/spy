@@ -8,7 +8,7 @@
 void bin_str_to_bin_data(const char * str_file, const char *bin_file)
 {
     FILE *fpin = fopen(str_file, "r");
-    FILE *fpout = fopen(bin_file, "w");
+    FILE *fpout = fopen(bin_file, "wb");
 
     int ct = 7;
     char buf = 0x00;

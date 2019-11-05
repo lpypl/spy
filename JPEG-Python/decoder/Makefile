@@ -1,4 +1,10 @@
-lpy-jpeg-decoder : decoder.o main.o util.o
+ifeq ($(OS),Windows_NT)
+	TARGET = lpy-jpeg-dncoder.exe
+else
+	TARGET = lpy-jpeg-dncoder
+endif
+
+$(TARGET) : decoder.o main.o util.o
 	g++ -o $@ $^
 
 decoder.o : decoder.cpp jpeg.h
