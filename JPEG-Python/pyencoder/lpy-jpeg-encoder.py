@@ -131,33 +131,25 @@ def main():
     PREFIX = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))+ "/"
     DIR_PATH = os.path.dirname(os.path.realpath(__file__)) + "/"
     lpy_encoder = DIR_PATH + "lpy-jpeg-encoder"
-    jpeg_in_file = "../Pictures/squirrel.jpg"
-    jpeg_out_file = "../Pictures/lpy-jpeg.jpeg"
+    jpeg_in_file = None
+    jpeg_out_file = None
     info = None
     SKIP_COUNT = 0
     LEAST_LEN = 0
 
-    if len(sys.argv) not in (3, 4, 5, 6, 7):
-        print("Usage: %s infile outfile [info] [skip] [min_len]" % sys.argv[0])
-        sys.exit(-1)
-    elif len(sys.argv) == 3:
-        jpeg_in_file = sys.argv[1]
-        jpeg_out_file = sys.argv[2]
-    elif len(sys.argv) == 4:
-        jpeg_in_file = sys.argv[1]
-        jpeg_out_file = sys.argv[2]
-        info = sys.argv[3]
-    elif len(sys.argv) == 5:
-        jpeg_in_file = sys.argv[1]
-        jpeg_out_file = sys.argv[2]
-        info = sys.argv[3]
-        SKIP_COUNT = int(sys.argv[4])
-    elif len(sys.argv) == 6:
-        jpeg_in_file = sys.argv[1]
-        jpeg_out_file = sys.argv[2]
-        info = sys.argv[3]
-        SKIP_COUNT = int(sys.argv[4])
+    if len(sys.argv) >= 6:
         LEAST_LEN = int(sys.argv[5])
+    if len(sys.argv) >= 5:
+        SKIP_COUNT = int(sys.argv[4])
+    if len(sys.argv) >= 4:
+        info = sys.argv[3]
+    if len(sys.argv) >= 3:
+        jpeg_out_file = sys.argv[2]
+        jpeg_in_file = sys.argv[1]
+    else:
+        print("Usage: %s infile outfile [info] [skip] [min_len]" % sys.argv[0])
+        sys.exit(-1)    
+        
 
     with TemporaryDirectory() as TMPDIR:
         # lpy_encoder = "../cencoder/lpy_jpeg_encoder"
