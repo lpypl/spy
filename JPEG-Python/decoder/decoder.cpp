@@ -363,7 +363,7 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                         ele_of_block_count++;
 
                         //解析信息
-                        if (ac_signal != 0 && ac_signal != 1 && len_of_int_bin(ac_signal) >= LEAST_LEN && ac_signal > 0)
+                        if (ac_signal != 0 && ac_signal != 1 && ac_signal != -1 && len_of_int_bin(ac_signal) >= LEAST_LEN)
                         {
 
                             if (skip_count != 0)

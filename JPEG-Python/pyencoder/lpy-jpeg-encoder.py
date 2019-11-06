@@ -42,7 +42,7 @@ def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
             zero_len = signsList[iter_list][iter_signs][0]
             val = signsList[iter_list][iter_signs][1]
 
-            if val != 0 and val != 1 and len(bin(abs(val))) - 2 >= LEAST_LEN and val > 0:
+            if val != 0 and val != 1 and val != -1 and len(bin(abs(val))) - 2 >= LEAST_LEN:
 
                 if skip_count != 0:
                     skip_count -= 1
@@ -51,11 +51,26 @@ def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
                     skip_count = SKIP_COUNT
 
                     # print(val, end=', ')
+                    if val > 0:
 
-                    if infoList[0] & 0x01 == 0:
-                        val &= 0b1111_1110
-                    else:
-                        val |= 0b0000_0001
+                        if infoList[0] & 0x01 == 0:
+                            val &= 0b1111_1110
+                        else:
+                            val |= 0b0000_0001
+
+                    if val < 0:
+                        valbak = abs(val)
+                        if infoList[0] & 0x01 == 0:
+                            valbak &= 0b1111_1110
+                        else:
+                            valbak |= 0b0000_0001
+
+                        val = -valbak
+
+                    # if infoList[0] & 0x01 == 0:
+                    #     val &= 0b1111_1110
+                    # else:
+                    #     val |= 0b0000_0001
 
                     signsList[iter_list][iter_signs] = (zero_len, val)
 
