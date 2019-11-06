@@ -41,6 +41,9 @@ def quantifyBlock(originBlock, type):
         raise TypeError("type must be L or C")
 
     block = originBlock.astype(np.float32)
+
+    # DC电平偏移是必要的，否则图像色彩会不正常
+    # 应该是解码器都会执行逆偏移的缘故吧
     norm_block = block - 128
     dct_block = cv2.dct(norm_block)
 
