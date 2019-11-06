@@ -4,28 +4,6 @@ import math
 
 from jpegTable import *
 
-def dct(data):
-    """
-    dct
-    :param data:8x8 DATA - np.uint8
-    :return: 8x8 dct DATA - np.float32
-    """
-    dataf = data.astype(np.float32)
-    dataf_dct = cv2.dct(dataf)
-    return dataf_dct
-
-
-def idct(dataf_dct):
-    """
-    idct
-    :param dataf_dct: 8x8 DATA - np.float32
-    :return: 8x8 idct DATA - np.uint8
-    """
-    dataf_idct = cv2.idct(dataf_dct)
-    data_idct = dataf_idct.astype(np.uint8)
-    return  data_idct
-
-
 def data2blocks(data):
     """
     将图像数据矩阵转换为8x8的BLOCK，不足8x8的数据会填充0
