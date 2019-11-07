@@ -17,4 +17,4 @@ util.o : util.cpp util.h
 	g++ -c $<
 
 clean:
-	rm decoder.o lpy-jpeg-decoder main.o util.o
+	rm -rf lpy-jpeg-decoder *.o *.exe

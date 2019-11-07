@@ -1,12 +1,9 @@
-JPEG-Python/decoder/*.o
-JPEG-Python/files/
-JPEG-Python/cencoder/*.o
 JPEG-Python/pyencoder/__pycache__
-JPEG-Python/Pictures/
 JPEG-Python/decoder/lpy-jpeg-decoder
+JPEG-Python/cencoder/*.o
+JPEG-Python/cencoder/*.exe
 JPEG-Python/cencoder/lpy-jpeg-encoder
-JPEG-Python/decoder/lpy-jpeg-decoder.exe
-JPEG-Python/cencoder/lpy-jpeg-encoder.exe
+JPEG-Python/decoder/*.o
+JPEG-Python/decoder/*.exe
 JPEG-Python/bin/
 
-JPEG-Python/decoder/lpy-jpeg-decoder.exe

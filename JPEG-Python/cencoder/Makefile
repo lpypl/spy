@@ -17,4 +17,4 @@ main.o :  main.c jpeg.h jpeg-binary-tools.h
 	gcc -c $<
 
 clean :
-	rm main.o jpeg.o jpeg-binary-tools.o lpy_jpeg_encoder
+	rm -rf lpy-jpeg-encoder *.o *.exe
