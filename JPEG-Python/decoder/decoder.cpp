@@ -32,6 +32,7 @@ long read_ct = 0;
  */
 void skip_segment(FILE *infp)
 {
+    //读取本段长度
     uint8_t len = read_uint16_bigend(infp);
     len -= 2;
     fseek(infp, len, SEEK_CUR);

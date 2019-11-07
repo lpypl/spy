@@ -137,7 +137,9 @@ void write_SOS(FILE *foutp, uint8_t channel)
     {
         //channel 1
         putc(0x01, foutp);
-        putc(0x00, foutp);
+        //高4位：直流分量使用的哈夫曼编码树编号
+        //低4位：交流分量使用的哈夫曼树编号
+        putc(0x00, foutp); 
 
         //channel 2
         putc(0x02, foutp);
