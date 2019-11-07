@@ -10,12 +10,16 @@ def data2blocks(data):
     :param data:图像数据矩阵（二维，单个通道）
     :return:blocks(block list),height(填充后的实际高度), width（填充后的实际宽度）
     """
+
+    # 原始宽高
     height, width = data.shape
 
     # 扩充
     newdata = np.zeros(((height+7)//8 * 8, (width+7)//8 * 8))
     newdata[0:height, 0:width] = data
     data = newdata
+
+    # 扩充后宽高
     height, width = data.shape
 
     assert height%8==0 and width%8==0
@@ -249,18 +253,23 @@ def huffmanTable2BinaryData(dcl, dcc, acl, acc):
     binaryData = ""
 
     # DC 0
+    # table id 0x00
     binaryData += int2ByteBinary(0x00)
+    # 1-16 各个长度的编码数目
     for category in range(1, 17):
         categoryCount = 0
         for item in dcl:
             if item[1] == category:
                 categoryCount += 1
+        # count
         binaryData += int2ByteBinary(categoryCount)
     for item in dcl:
         binaryData += int2ByteBinary(item[0])
 
     # DC 1
+    # table id 0x01
     binaryData += int2ByteBinary(0x01)
+    # 1-16 各个长度的编码数目
     for category in range(1, 17):
         categoryCount = 0
         for item in dcc:
@@ -272,35 +281,49 @@ def huffmanTable2BinaryData(dcl, dcc, acl, acc):
 
     #
     # AC 0
+    # table id 0x10
     binaryData += int2ByteBinary(0x10)
+    # 写入 1-16 各个长度的编码数目
     for category in range(1, 17):
         categoryCount = 0
         for item in acl.values():
             if item[0] == category:
                 categoryCount += 1
         binaryData += int2ByteBinary(categoryCount)
+    # 写入各个编码
+    # 对所有的编码字符串进行升序排序，即可使这些编码按照范式哈夫曼表从左至右，从上到下的顺序排列
     aclItems = [val for val in acl.items()]
     aclItems.sort(key=lambda a:a[1][1])
     aclCodeList = [val[0] for val in aclItems]
     for key in aclCodeList:
+        # signal - count of zero
         binaryData += int2FourBits(eval("0x"+key.split('/')[0]))
+        # signal - length of ac
         binaryData += int2FourBits(eval("0x"+key.split('/')[1]))
 
     # AC 1
+    # table id 0x11
     binaryData += int2ByteBinary(0x11)
+    # 写入 1-16 各个长度的编码数目
     for category in range(1, 17):
         categoryCount = 0
         for item in acc.values():
             if item[0] == category:
                 categoryCount += 1
         binaryData += int2ByteBinary(categoryCount)
+    # 写入各个编码
+    # 对所有的编码字符串进行升序排序，即可使这些编码按照范式哈夫曼表从左至右，从上到下的顺序排列
     accItems = [val for val in acc.items()]
     accItems.sort(key=lambda a:a[1][1])
     accCodeList = [val[0] for val in accItems]
     for key in accCodeList:
+        # signal - count of zero
         binaryData += int2FourBits(eval("0x"+key.split('/')[0]))
+        # signal - length of ac
         binaryData += int2FourBits(eval("0x"+key.split('/')[1]))
 
+
+    # 写入DHT标记和长度信息
     binaryData = int2ByteBinary(0xFF) + int2ByteBinary(0xC4) + int2DoubleByteBinary(len(binaryData)//8 + 2) + binaryData
 
     return binaryData

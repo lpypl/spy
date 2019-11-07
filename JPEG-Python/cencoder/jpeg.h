@@ -7,7 +7,6 @@
 extern uint8_t SOI_APP0[];
 extern uint8_t DQT_LU[];
 extern uint8_t DQT_CH[];
-extern uint8_t SOF0[];
 extern uint8_t SOS[];
 extern uint8_t EOI[];
 
