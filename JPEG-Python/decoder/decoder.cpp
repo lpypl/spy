@@ -18,64 +18,18 @@ uint8_t channel_huffman_info[4] = {0};
 //记录颜色成分总数
 int channel_total = 0;
 
-//jpeg 图像数据, 暂存此处，以待解析
-//并且 next_bit 借此结构实现了下一位代码生成器
+//jpeg 图像数据
 vector<uint8_t> jpeg_data;
-
-//二进制码提供器控制变量
-//哪一个vector元素
-size_t __next_bit_item = 0;
-//哪一位uint8_t
-int __next_bit_pos = 7;
+//jpeg 数据提供器，按位提供数据
+BitGenerator *jpeg_data_genarator;
 
 //读取计数，用于解析隐藏信息
 long read_ct = 0;
 
 /**
- * 提供下一位二进制编码
- */
-uint8_t next_bit()
-{
-    if (__next_bit_pos == -1)
-    {
-        if (__next_bit_item == jpeg_data.size() - 1)
-        {
-            // printf("end of file binary data....... %ld\n", __next_bit_item);
-            throw 1;
-        }
-        else
-        {
-            // printf("%ld\n", __next_bit_item);
-            __next_bit_item += 1;
-            __next_bit_pos = 7;
-        }
-    }
-
-    uint8_t bit = (jpeg_data[__next_bit_item] >> __next_bit_pos) & 0x1;
-    __next_bit_pos--;
-    return bit;
-}
-
-/**
- * 提供下一位二进制编码
- */
-string next_bit_string()
-{
-    try
-    {
-        return to_string(next_bit());
-    }
-    catch (int errornum)
-    {
-        throw errornum;
-    }
-}
-
-
-/**
  * 跳过某一段segment
  * 读取到某个标记之后，可用此方法跳过这一段
- */ 
+ */
 void skip_segment(FILE *infp)
 {
     uint8_t len = read_uint16_bigend(infp);
@@ -85,7 +39,7 @@ void skip_segment(FILE *infp)
 
 /**
  * 读取哈夫曼表，存到 huffman_tables
- */ 
+ */
 void read_huffman(FILE *infp)
 {
     uint8_t len = read_uint16_bigend(infp);
@@ -142,7 +96,7 @@ void read_huffman(FILE *infp)
 
 /**
  * 打印哈夫曼表(DEBUG)
- */ 
+ */
 void print_huffman()
 {
     // print huffman
@@ -161,7 +115,7 @@ void print_huffman()
 
 /**
  * 读取SOS，在此函数中也会执行图像数据的读取（read_jpeg_data）
- */ 
+ */
 void read_sos(FILE *infp)
 {
     //length
@@ -185,7 +139,7 @@ void read_sos(FILE *infp)
 
 /**
  * 读取图像数据，存储在 jpeg_data
- */ 
+ */
 void read_jpeg_data(FILE *infp)
 {
     printf("Reading jpeg image data...\n");
@@ -221,7 +175,7 @@ error_or_eof:
 
 /**
  * 将jpeg-data写入文件(DEBUG)
- */ 
+ */
 void write_image_data_to_file(const char *outfile)
 {
     FILE *outfp = fopen(outfile, "wb");
@@ -235,7 +189,7 @@ void write_image_data_to_file(const char *outfile)
 
 /**
  * 打印图像数据(DUBUG)
- */ 
+ */
 void print_image_data()
 {
     printf("image data length is %lu\n", jpeg_data.size());
@@ -245,12 +199,17 @@ void print_image_data()
     }
 }
 
-
 /**
  * 读取隐藏信息
- */ 
+ */
 void read_info(int SKIP_COUNT, int LEAST_LEN)
 {
+    if (jpeg_data_genarator == nullptr)
+    {
+        perror("jpeg_data_genarator is null\n");
+        return;
+    }
+
     string code;
     int dc_map_index = 0;
     int ac_map_index = 0;
@@ -283,7 +242,7 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                 code = "";
                 while (huffman_tables[dc_map_index].find(code) == huffman_tables[dc_map_index].end())
                 {
-                    code += next_bit_string();
+                    code += jpeg_data_genarator->next_bit_string();
                     // printf("dc not found!!!\n");
                 }
                 len_of_dc_signal = huffman_tables[dc_map_index][code];
@@ -296,15 +255,15 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                 else
                 {
                     dc_signal = 0;
-                    isPositive = next_bit() == 1;
+                    isPositive = jpeg_data_genarator->next_bit() == 1;
                     dc_signal |= 1;
                     for (size_t i = 0; i < len_of_dc_signal - 1; i++)
                     {
                         dc_signal <<= 1;
                         if (isPositive)
-                            dc_signal |= next_bit();
+                            dc_signal |= jpeg_data_genarator->next_bit();
                         else
-                            dc_signal |= (!next_bit());
+                            dc_signal |= (!jpeg_data_genarator->next_bit());
                     }
                     if (!isPositive)
                     {
@@ -323,7 +282,7 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                     code = "";
                     while (huffman_tables[ac_map_index].find(code) == huffman_tables[ac_map_index].end())
                     {
-                        code += next_bit_string();
+                        code += jpeg_data_genarator->next_bit_string();
                     }
                     ac_zero = huffman_tables[ac_map_index][code] >> 4;
                     len_of_ac_signal = huffman_tables[ac_map_index][code] & 0x0F;
@@ -343,15 +302,15 @@ void read_info(int SKIP_COUNT, int LEAST_LEN)
                     else
                     {
                         ac_signal = 0;
-                        isPositive = next_bit() == 1;
+                        isPositive = jpeg_data_genarator->next_bit() == 1;
                         ac_signal |= 1;
                         for (size_t i = 0; i < len_of_ac_signal - 1; i++)
                         {
                             ac_signal <<= 1;
                             if (isPositive)
-                                ac_signal |= next_bit();
+                                ac_signal |= jpeg_data_genarator->next_bit();
                             else
-                                ac_signal |= (!next_bit());
+                                ac_signal |= (!jpeg_data_genarator->next_bit());
                         }
                         if (!isPositive)
                         {
@@ -420,7 +379,7 @@ void read_jpeg(const char *infile, int skip_count, int least_len)
 {
     FILE *infp = fopen(infile, "rb");
 
-    if(infp == NULL)
+    if (infp == NULL)
     {
         perror("Fail: ");
         exit(-1);
@@ -430,9 +389,11 @@ void read_jpeg(const char *infile, int skip_count, int least_len)
 
     while ((ch = getc(infp)) != -1)
     {
+        //不是0xFF
         if (ch != 0xFF)
             continue;
 
+        //找到一个 0xFF
         if ((ch = getc(infp)) == -1)
         {
             printf("\n$$$$$$ 0xFF之后EOF $$$$$$\n");
@@ -480,17 +441,9 @@ void read_jpeg(const char *infile, int skip_count, int least_len)
 
     // print_image_data();
     // print_huffman();
-    // decode_jpeg_data();
-    // write_image_data_to_file("../files/c-binary-data.bin");
-    // printf("%d\n", jpeg_data[147688]);
-    // for (size_t i = 0; i < 147690*8; i++)
-    // {
-    //     next_bit();
-    // }
-    // printf("read count is %ld\n", read_ct);
-    // printf("block count is %ld\n", block_ct);
 
+    jpeg_data_genarator = new BitGenerator(jpeg_data);
     read_info(skip_count, least_len);
+
+    delete jpeg_data_genarator;
 }
-
-

@@ -3,6 +3,8 @@
     "files.associations": {
         "jpeg.h": "c",
         "stdint.h": "c",
-        "string": "cpp"
+        "string": "cpp",
+        "array": "cpp",
+        "string_view": "cpp"
     }
 }
