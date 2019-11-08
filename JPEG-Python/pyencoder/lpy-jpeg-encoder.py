@@ -20,6 +20,35 @@ npsignsList = []
 npsignsList2 = []
 
 
+# -5      11111011
+# -4      11111100
+# -3      11111101
+# -2      11111110
+# -1      11111111
+# 0       00000000
+# 1       00000001
+# 2       00000010
+# 3       00000011
+# 4       00000100
+# 5       00000101
+
+# -5      010
+# -4      011
+# -3      00
+# -2      01
+# -1      0
+# 0       -
+# 1       1
+# 2       10
+# 3       11
+# 4       100
+# 5       101
+
+# 理论上说，若在经行程编码之后的中间符号的AC值中隐藏信息，只要最终变换后的数值非0，即可正常进行编码和解码
+# 要求非0是因为AC编码表中不存在 除（0/0）和（F/0）之外的其他（X/0）信源
+# 若使用 1 和 -1 可能会使AC变为0， 而行程编码之后， 除EOB和ZRL之外，不应该出现AC为0的情况
+# 因此要求系数 not in (-1, 0, 1)
+# 负数末位置0或置1，相当于其绝对值置0或置1，然后再加负号
 def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
     info = str.encode(info)
     info_length = len(info)
@@ -42,7 +71,7 @@ def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
             zero_len = signsList[iter_list][iter_signs][0]
             val = signsList[iter_list][iter_signs][1]
 
-            if val != 0 and val != 1 and val != -1 and len(bin(abs(val))) - 2 >= LEAST_LEN:
+            if val not in (-1, 0, 1) and len(bin(abs(val))) - 2 >= LEAST_LEN:
 
                 if skip_count != 0:
                     skip_count -= 1
