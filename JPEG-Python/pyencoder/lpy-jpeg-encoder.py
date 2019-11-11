@@ -15,9 +15,26 @@ def huffmanTable2BinaryDataStringFile(outfile):
     fout.write(binaryData)
     fout.close()
 
+def hideInfoInVal(val, infoVal):
 
-npsignsList = []
-npsignsList2 = []
+    assert val not in (-1, 0, 1)
+
+    if val > 0:
+
+        if infoVal & 0x01 == 0:
+            val &= 0b1111_1110
+        else:
+            val |= 0b0000_0001
+
+    elif val < 0:
+        valbak = abs(val)
+        if infoVal & 0x01 == 0:
+            valbak &= 0b1111_1110
+        else:
+            valbak |= 0b0000_0001
+
+        val = -valbak
+    return val
 
 
 # -5      11111011
@@ -50,6 +67,8 @@ npsignsList2 = []
 # 因此要求系数 not in (-1, 0, 1)
 # 负数末位置0或置1，相当于其绝对值置0或置1，然后再加负号
 def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
+
+    # 将 info 和 info_length 逐位存入infoList
     info = str.encode(info)
     info_length = len(info)
     infoList = []
@@ -59,18 +78,26 @@ def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
         for i in range(8):
             infoList.append((char >> (7 - i)) & 0x01)
 
-    signsList = list(itertools.chain(*midSignsTupleList))
-    global npsignsList, npsignsList2
-    npsignsList = np.array(signsList)
 
+    # tuple 是用来区分Y、Cb、Cr的，隐藏信息是无需考虑颜色分量
+    # 去除 tuple，便于操作
+    # 去除 tuple，得到包含所有 8x8 block 的 list
+    signsList = list(itertools.chain(*midSignsTupleList))
+
+    # 跳过加密信息位置计数
+    # 可以选择每隔多少个位置（满足其他隐藏条件的位置）实际隐藏一位
+    # 可以作为一个加密参数
     skip_count = SKIP_COUNT
 
     for iter_list in range(len(signsList)):
+        # 从 1 开始，跳过 DC
         for iter_signs in range(1, len(signsList[iter_list])):
 
             zero_len = signsList[iter_list][iter_signs][0]
             val = signsList[iter_list][iter_signs][1]
 
+            # LEAST作为一个筛选条件，表示只在二进制编码位数大于某个值的情况下
+            # 才在该位置进行信息隐藏（配合SKIP_COUNT使用）
             if val not in (-1, 0, 1) and len(bin(abs(val))) - 2 >= LEAST_LEN:
 
                 if skip_count != 0:
@@ -79,36 +106,18 @@ def hideInfoInAC(info, midSignsTupleList, SKIP_COUNT, LEAST_LEN):
                 else:
                     skip_count = SKIP_COUNT
 
+                    # 根据要隐藏的信息修改AC值
                     # print(val, end=', ')
-                    if val > 0:
-
-                        if infoList[0] & 0x01 == 0:
-                            val &= 0b1111_1110
-                        else:
-                            val |= 0b0000_0001
-
-                    if val < 0:
-                        valbak = abs(val)
-                        if infoList[0] & 0x01 == 0:
-                            valbak &= 0b1111_1110
-                        else:
-                            valbak |= 0b0000_0001
-
-                        val = -valbak
-
-                    # if infoList[0] & 0x01 == 0:
-                    #     val &= 0b1111_1110
-                    # else:
-                    #     val |= 0b0000_0001
+                    val = hideInfoInVal(val, infoList[0])
 
                     signsList[iter_list][iter_signs] = (zero_len, val)
-
                     # print(val)
 
+                    # 去掉刚才完成隐藏的那一位信息
+                    # 并检查是否已经隐藏完毕
                     infoList = infoList[1:]
                     if len(infoList) == 0:
                         print("信息隐藏完毕")
-                        npsignsList2 = np.array(signsList)
                         return [(signsList[i * 3], signsList[i * 3 + 1], signsList[i * 3 + 2]) \
                                 for i in range(len(signsList) // 3)]
 
@@ -142,6 +151,7 @@ def img2jpegBinaryDataStringFile_Colorful(imname, txtname, info, SKIP_COUNT, LEA
     cbdiffZigList = diffBlocksDC(cbzigList)
     crdiffZigList = diffBlocksDC(crzigList)
 
+    # 转中间符号
     midSignsTupleList = []
     for i in range(len(ydiffZigList)):
         midSignsTupleList.append((zigzag2midSigns(ydiffZigList[i]),

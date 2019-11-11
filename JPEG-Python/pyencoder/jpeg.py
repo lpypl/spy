@@ -144,6 +144,7 @@ def zigzag2midSigns(zigzagBlock):
     midSigns = []
     midSigns.append(zigzagBlock[0])
     # AC
+    # 记录前导0的数目
     zeroCount = 0
     for i in range(1, len(zigzagBlock)) :
         val = zigzagBlock[i]
