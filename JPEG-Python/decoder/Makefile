@@ -16,5 +16,15 @@ main.o : main.cpp decoder.h
 util.o : util.cpp util.h
 	g++ -c $<
 
+ifeq ($(OS),Windows_NT)
+
 clean:
-	rm -rf lpy-jpeg-decoder *.o *.exe
+	del *.o 
+	del *.exe
+
+else
+
+clean:
+	rm -rf lpy-jpeg-decoder *.o
+
+endif

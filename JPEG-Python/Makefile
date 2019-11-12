@@ -18,6 +18,10 @@ uninstall:
 help:
 	@echo install uninstall all
 
+clean:
+	+$(MAKE) -C cencoder clean
+	+$(MAKE) -C decoder clean
+
 else
 
 install:

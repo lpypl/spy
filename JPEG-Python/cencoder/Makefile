@@ -16,5 +16,15 @@ jpeg-binary-tools.o : jpeg-binary-tools.c jpeg-binary-tools.h
 main.o :  main.c jpeg.h jpeg-binary-tools.h
 	gcc -c $<
 
-clean :
-	rm -rf lpy-jpeg-encoder *.o *.exe
+ifeq ($(OS),Windows_NT)
+
+clean:
+	del *.o 
+	del *.exe
+
+else
+
+clean:
+	rm -rf lpy-jpeg-decoder *.o
+
+endif
